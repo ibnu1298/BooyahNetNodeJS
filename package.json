@@ -1,0 +1,14 @@
+{
+  "name": "node-postgres-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "express": "^4.18.0",
+    "pg": "^8.16.0",
+    "uuid": "^11.1.0"
+  }
+}
