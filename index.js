@@ -20,7 +20,9 @@ app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-const initSql = fs.readFileSync(path.join(__dirname, "init.sql")).toString();
+const initSql = fs
+  .readFileSync(path.join(__dirname, "sql", "init.sql"))
+  .toString();
 
 db.query(initSql)
   .then(() => console.log("✅ Tables checked/created"))
