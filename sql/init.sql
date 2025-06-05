@@ -1,19 +1,29 @@
-DROP TABLE IF EXISTS payments;
-DROP TABLE IF EXISTS users;
--- Enable UUID extension (for PostgreSQL)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table
-CREATE TABLE IF NOT EXISTS users (
+-- Users Table
+DROP TABLE IF EXISTS users CASCADE;
+CREATE TABLE users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(100),
-  email VARCHAR(100)
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_by VARCHAR(100) NOT NULL,
+  modified_at TIMESTAMP NULL,
+  modified_by VARCHAR(100)  NULL,
+  row_status BOOLEAN DEFAULT TRUE
 );
 
--- Payments table
-CREATE TABLE IF NOT EXISTS payments (
+-- Payments Table
+DROP TABLE IF EXISTS payments CASCADE;
+
+CREATE TABLE payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID REFERENCES users(id),
-  amount NUMERIC,
-  paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  amount NUMERIC NOT NULL,
+  paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_by VARCHAR(100) NOT NULL,
+  modified_at TIMESTAMP,
+  modified_by VARCHAR(100),
+  row_status BOOLEAN DEFAULT TRUE
 );
