@@ -13,10 +13,17 @@ exports.getAllUsers = async (req, res) => {
 exports.createUser = async (req, res) => {
   try {
     const { name, email } = req.body;
+
+    const createdBy = "system"; // nanti ganti pakai user dari JWT
+    const modifiedBy = "system";
+
     const result = await pool.query(
-      "INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *",
-      [name, email]
+      `INSERT INTO users (name, email, created_by, modified_by)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [name, email, createdBy, modifiedBy]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);

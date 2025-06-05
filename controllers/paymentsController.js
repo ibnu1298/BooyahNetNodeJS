@@ -13,10 +13,17 @@ exports.getAllPayments = async (req, res) => {
 exports.createPayment = async (req, res) => {
   try {
     const { user_id, amount } = req.body;
+
+    const createdBy = "system"; // nanti ganti pakai user dari JWT
+    const modifiedBy = "system";
+
     const result = await pool.query(
-      "INSERT INTO payments (user_id, amount) VALUES ($1, $2) RETURNING *",
-      [user_id, amount]
+      `INSERT INTO payments (user_id, amount, created_by, modified_by)
+       VALUES ($1, $2, $3, $4)
+       RETURNING *`,
+      [user_id, amount, createdBy, modifiedBy]
     );
+
     res.status(201).json(result.rows[0]);
   } catch (err) {
     console.error(err);
