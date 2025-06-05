@@ -3,8 +3,10 @@ const response = require("../utils/response");
 
 exports.getAllPayments = async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM payments");
-    res.json(rows);
+    const { rows } = await pool.query(
+      "SELECT * FROM payments WHERE row_status = true"
+    );
+    res.json(response.success("Payments retrieved successfully", rows));
   } catch (err) {
     console.error(err);
     res.status(500).json(response.error("Server error"));
@@ -14,9 +16,10 @@ exports.getAllPayments = async (req, res) => {
 exports.getPaymentById = async (req, res) => {
   try {
     const { id } = req.params;
-    const { rows } = await pool.query("SELECT * FROM payments WHERE id = $1", [
-      id,
-    ]);
+    const { rows } = await pool.query(
+      "SELECT * FROM payments WHERE id = $1 AND row_status = true",
+      [id]
+    );
 
     if (rows.length === 0) {
       return res.status(404).json(response.error("payments not found"));
@@ -33,11 +36,13 @@ exports.createPayment = async (req, res) => {
     const { user_id, amount } = req.body;
 
     const createdBy = "system"; // nanti ganti pakai user dari JWT
-
+    if (!/^[0-9a-f\-]{36}$/.test(user_id)) {
+      return res.status(404).json(response.error("users not found"));
+    }
     const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [
       user_id,
     ]);
-    if (rows.length === 0) {
+    if (!user_id || typeof user_id !== "string" || rows.length === 0) {
       return res.status(404).json(response.error("users not found"));
     }
     const result = await pool.query(

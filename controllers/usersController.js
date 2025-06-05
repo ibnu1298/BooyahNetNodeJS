@@ -4,7 +4,9 @@ const { validateUserInput } = require("../utils/validators/userValidator");
 
 exports.getAllUsers = async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM users");
+    const { rows } = await pool.query(
+      "SELECT * FROM users WHERE row_status = true"
+    );
     res.json(response.success("Users retrieved successfully", rows));
   } catch (err) {
     console.error(err);
@@ -16,7 +18,7 @@ exports.createUser = async (req, res) => {
   try {
     const { name, email } = req.body;
 
-    const errorMessage = validateUserInput(name, email);
+    const errorMessage = await validateUserInput(name, email);
     if (errorMessage) {
       return res.status(400).json(response.error(errorMessage));
     }
@@ -30,9 +32,11 @@ exports.createUser = async (req, res) => {
       [name, email, createdBy]
     );
 
-    res.status(201).json(result.rows[0]);
+    res
+      .status(201)
+      .json(response.success("Payment created successfully", result.rows[0]));
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Server error" });
+    res.status(500).json(response.error("Server error"));
   }
 };
