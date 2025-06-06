@@ -1,21 +1,30 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users Table
--- DROP TABLE IF EXISTS users CASCADE;
+--DROP TABLE IF EXISTS roles CASCADE;
+CREATE TABLE IF NOT EXISTS roles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(50) NOT NULL UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  created_by VARCHAR(100) NOT NULL,
+  modified_at TIMESTAMP,
+  modified_by VARCHAR(100),
+  row_status BOOLEAN DEFAULT TRUE
+);
+DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
-  email VARCHAR(100) NOT NULL,
+  email VARCHAR(100) NOT NULL UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role_id UUID REFERENCES roles(id) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   created_by VARCHAR(100) NOT NULL,
   modified_at TIMESTAMP NULL,
   modified_by VARCHAR(100)  NULL,
   row_status BOOLEAN DEFAULT TRUE
 );
-
--- Payments Table
--- DROP TABLE IF EXISTS payments CASCADE;
-
+DROP TABLE IF EXISTS payments CASCADE;
 CREATE TABLE IF NOT EXISTS  payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -27,3 +36,11 @@ CREATE TABLE IF NOT EXISTS  payments (
   modified_by VARCHAR(100),
   row_status BOOLEAN DEFAULT TRUE
 );
+
+DROP INDEX IF EXISTS unique_email_lower;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_email_lower ON users (LOWER(email));
+DROP INDEX IF EXISTS unique_name_lower;
+CREATE UNIQUE INDEX IF NOT EXISTS unique_name_lower ON roles (LOWER(name));
+
+
+

@@ -1,8 +1,10 @@
 const express = require("express");
 require("dotenv").config();
 
-const usersRoutes = require("./routes/users");
-const paymentsRoutes = require("./routes/payments");
+const usersRoutes = require("./routes/userRoutes");
+const paymentsRoutes = require("./routes/paymentRoutes");
+const authRoutes = require("./routes/authRoutes");
+const roleRoutes = require("./routes/roleRoutes");
 
 const fs = require("fs");
 const path = require("path");
@@ -15,6 +17,8 @@ app.use(express.json());
 
 app.use("/users", usersRoutes);
 app.use("/payments", paymentsRoutes);
+app.use("/auth", authRoutes);
+app.use("/roles", roleRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

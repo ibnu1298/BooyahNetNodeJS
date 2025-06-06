@@ -15,7 +15,7 @@ exports.validateUserInput = async (name, email) => {
   }
 
   const { rows } = await pool.query(
-    "SELECT * FROM users WHERE email = $1 AND row_status = true",
+    "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",
     [email]
   );
   if (rows.length > 0) {
