@@ -9,24 +9,37 @@ const JWT_SECRET = process.env.JWT_SECRET || "rahasia"; // ganti ke .env
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role_id } = req.body;
+    let finalRoleId = role_id;
+
+    if (
+      !finalRoleId ||
+      typeof finalRoleId !== "string" ||
+      finalRoleId.trim() === ""
+    ) {
+      const roleUser = await pool.query(
+        `SELECT id FROM roles
+        WHERE LOWER(name) = LOWER($1)`,
+        ["User"]
+      );
+      finalRoleId = roleUser.rows[0].id;
+    }
 
     const errorMessage = await validateAuthInput(
       name,
       email,
       password,
-      role_id
+      finalRoleId
     );
     if (errorMessage) {
       return res.status(400).json(response.error(errorMessage));
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const result = await pool.query(
       `INSERT INTO users (name, email, password, role_id, created_by)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, name, email, role_id`,
-      [name, email, hashedPassword, role_id, "system"]
+      [name, email, hashedPassword, finalRoleId, "system"]
     );
 
     res

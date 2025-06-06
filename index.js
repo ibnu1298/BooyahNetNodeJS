@@ -15,10 +15,10 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.use("/users", usersRoutes);
-app.use("/payments", paymentsRoutes);
-app.use("/auth", authRoutes);
-app.use("/roles", roleRoutes);
+app.use("/api/users", usersRoutes);
+app.use("/api/payments", paymentsRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/roles", roleRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

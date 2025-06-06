@@ -8,7 +8,7 @@ module.exports = function checkRole(requiredRole) {
       return res.status(403).json(response.error("No role assigned to user"));
     }
 
-    if (userRole !== requiredRole) {
+    if (userRole.toLowerCase() !== requiredRole.toLowerCase()) {
       return res
         .status(403)
         .json(response.error("Access denied: insufficient role"));

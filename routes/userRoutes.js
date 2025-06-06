@@ -4,8 +4,8 @@ const users = require("../controllers/usersController");
 const verifyToken = require("../middleware/authMiddleware");
 const checkRole = require("../middleware/checkRole");
 
-router.get("/", users.getAllUsers);
-router.post("/", users.createUser);
-router.put("/update", verifyToken, checkRole("Admin"), users.updateUser);
+router.get("/", verifyToken, checkRole("Admin"), users.getAllUsers);
+router.get("/:id", verifyToken, users.getUserById);
+router.put("/update", verifyToken, users.updateUser);
 
 module.exports = router;

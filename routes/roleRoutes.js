@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const rolesController = require("../controllers/rolesController");
-const { verifyToken } = require("../middleware/authMiddleware");
+const role = require("../controllers/rolesController");
+const verifyToken = require("../middleware/authMiddleware");
+const checkRole = require("../middleware/checkRole");
 
-router.post("/", rolesController.createRole);
-router.get("/", rolesController.getAllRoles);
+router.post("/", verifyToken, checkRole("Admin"), role.createRole);
+router.get("/", verifyToken, checkRole("Admin"), role.getAllRoles);
 
 module.exports = router;
