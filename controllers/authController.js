@@ -10,7 +10,12 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role_id } = req.body;
 
-    const errorMessage = await validateAuthInput(name);
+    const errorMessage = await validateAuthInput(
+      name,
+      email,
+      password,
+      role_id
+    );
     if (errorMessage) {
       return res.status(400).json(response.error(errorMessage));
     }
@@ -37,9 +42,13 @@ exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const result = await pool.query("SELECT * FROM users WHERE email = $1", [
-      email,
-    ]);
+    const result = await pool.query(
+      `SELECT users.*, roles.name AS role_name
+        FROM users
+        JOIN roles ON users.role_id = roles.id
+        WHERE users.email = $1`,
+      [email]
+    );
     if (result.rows.length === 0) {
       return res.status(400).json(response.error("Invalid credentials"));
     }
@@ -51,9 +60,13 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email, role_id: user.role_id },
+      {
+        userId: user.id,
+        email: user.email,
+        role: user.role_name, // penting: biar nanti bisa dicek di middleware
+      },
       JWT_SECRET,
-      { expiresIn: "1d" }
+      { expiresIn: "1h" }
     );
 
     res.status(200).json(response.success("Login successful", { token }));

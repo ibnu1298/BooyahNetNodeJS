@@ -1,4 +1,10 @@
 exports.success = (message, data = null) => {
+  if (data == null) {
+    return {
+      success: false,
+      message,
+    };
+  }
   return {
     success: true,
     message,
@@ -7,6 +13,12 @@ exports.success = (message, data = null) => {
 };
 
 exports.error = (message, data = null) => {
+  if (data == null) {
+    return {
+      success: false,
+      message,
+    };
+  }
   return {
     success: false,
     message,
