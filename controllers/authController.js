@@ -10,7 +10,7 @@ exports.register = async (req, res) => {
   try {
     const { name, email, password, role_id } = req.body;
     let finalRoleId = role_id;
-
+    let rolePlot = email === process.env.EMAIL_ADMIN_INIT ? "Admin" : "User";
     if (
       !finalRoleId ||
       typeof finalRoleId !== "string" ||
@@ -19,7 +19,7 @@ exports.register = async (req, res) => {
       const roleUser = await pool.query(
         `SELECT id FROM roles
         WHERE LOWER(name) = LOWER($1)`,
-        ["User"]
+        [rolePlot]
       );
       finalRoleId = roleUser.rows[0].id;
     }
