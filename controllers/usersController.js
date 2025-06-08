@@ -12,7 +12,6 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json(response.error("Server error"));
   }
 };
-
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -32,7 +31,6 @@ exports.getUserById = async (req, res) => {
     res.status(500).json(response.error("Server error"));
   }
 };
-
 exports.updateUser = async (req, res) => {
   try {
     const { user_id, name } = req.body;
@@ -70,7 +68,6 @@ exports.updateUser = async (req, res) => {
     res.status(500).json(response.error("Server error"));
   }
 };
-
 exports.updateUserRole = async (req, res) => {
   try {
     const { user_id, role_id } = req.body;

@@ -5,6 +5,7 @@ const usersRoutes = require("./routes/userRoutes");
 const paymentsRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
 const roleRoutes = require("./routes/roleRoutes");
+const otpRoutes = require("./routes/otpRoutes");
 
 const fs = require("fs");
 const path = require("path");
@@ -19,6 +20,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/payments", paymentsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/roles", roleRoutes);
+app.use("/api/otp", otpRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

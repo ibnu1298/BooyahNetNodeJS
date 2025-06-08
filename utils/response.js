@@ -1,7 +1,7 @@
 exports.success = (message, data = null) => {
   if (data == null) {
     return {
-      success: false,
+      success: true,
       message,
     };
   }
