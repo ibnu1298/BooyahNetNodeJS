@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS roles (
   modified_by VARCHAR(100),
   row_status BOOLEAN DEFAULT TRUE
 );
-DROP TABLE IF EXISTS users CASCADE;
+--DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
   modified_by VARCHAR(100)  NULL,
   row_status BOOLEAN DEFAULT TRUE
 );
-DROP TABLE IF EXISTS payments CASCADE;
+--DROP TABLE IF EXISTS payments CASCADE;
 CREATE TABLE IF NOT EXISTS  payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS  payments (
   row_status BOOLEAN DEFAULT TRUE
 );
 
-DROP TABLE IF EXISTS user_details CASCADE;
+--DROP TABLE IF EXISTS user_details CASCADE;
 CREATE TABLE IF NOT EXISTS user_details (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS user_details (
   modified_by VARCHAR(100) NULL,
   row_status BOOLEAN DEFAULT TRUE
 );
-DROP TABLE IF EXISTS otp_codes CASCADE;
+--DROP TABLE IF EXISTS otp_codes CASCADE;
 CREATE TABLE IF NOT EXISTS otp_codes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NULL,
@@ -73,9 +73,9 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-DROP INDEX IF EXISTS unique_email_lower;
+--DROP INDEX IF EXISTS unique_email_lower;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_email_lower ON users (LOWER(email));
-DROP INDEX IF EXISTS unique_name_lower;
+--DROP INDEX IF EXISTS unique_name_lower;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_name_lower ON roles (LOWER(name));
 
 
