@@ -9,8 +9,8 @@ const {
 
 const JWT_SECRET = process.env.JWT_SECRET || "rahasia"; // ganti ke .env
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
-const expireAccessToken = "60s";
-const expireRefreshToken = "3m";
+const expireAccessToken = process.env.EXP_ACCESS_TOKEN;
+const expireRefreshToken = process.env.EXP_REFRESH_TOKEN;
 exports.register = async (req, res) => {
   try {
     const { name, email, password, role_id } = req.body;
@@ -170,26 +170,27 @@ exports.login = async (req, res) => {
       role: user.role_name,
     };
     const token = jwt.sign(payload, JWT_SECRET, {
-      expiresIn: "60s",
+      expiresIn: expireAccessToken,
     });
 
     // Decode token tanpa verifikasi (hanya untuk melihat isinya)
     const decoded = jwt.decode(token);
 
     console.log("🧾 Token:", token);
+
     console.log(
-      "🕒 Issued at (iat):",
-      new Date(decoded.iat * 1000).toLocaleString()
-    );
-    console.log(
-      "⏰ Expires at (exp):",
+      "⏰ accsess token (exp):",
       new Date(decoded.exp * 1000).toLocaleString()
     ); // access token cepat expired
     const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
       expiresIn: expireRefreshToken,
     }); // refresh token lebih lama
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 hari
-
+    const decodedRefreshToken = jwt.decode(refreshToken);
+    console.log(
+      "⌚ RefreshToken (exp):",
+      new Date(decodedRefreshToken.exp * 1000).toLocaleString()
+    );
     await pool.query(
       `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
       [user.id, refreshToken, expiresAt]
