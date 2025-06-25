@@ -42,7 +42,7 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await pool.query(
       `INSERT INTO users (name, email, password, role_id, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+       VALUES ($1, LOWER($2), $3, $4, $5)
        RETURNING id, name, email, role_id`,
       [name, email, hashedPassword, finalRoleId, "system"]
     );
@@ -97,7 +97,7 @@ exports.registerWithWhatsapp = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const result = await client.query(
       `INSERT INTO users (name, email, password, role_id, created_by)
-       VALUES ($1, $2, $3, $4, $5)
+       VALUES ($1, LOWER($2), $3, $4, $5)
        RETURNING id, name, email, role_id`,
       [name, email, hashedPassword, finalRoleId, "system"]
     );
@@ -151,7 +151,7 @@ exports.login = async (req, res) => {
       `SELECT users.*, roles.name AS role_name
         FROM users
         JOIN roles ON users.role_id = roles.id
-        WHERE users.email = $1`,
+        WHERE LOWER(users.email) = LOWER($1)`,
       [email]
     );
     if (result.rows.length === 0) {
@@ -356,7 +356,7 @@ exports.loginEmailWithOTP = async (req, res) => {
        FROM users u
        JOIN roles r ON u.role_id = r.id
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status = TRUE
-       WHERE u.email = $1 AND u.row_status = TRUE`,
+       WHERE LOWER(u.email) = LOWER($1) AND u.row_status = TRUE`,
       [email]
     );
 
@@ -420,4 +420,45 @@ exports.logout = async (req, res) => {
   ]);
 
   res.status(200).json({ success: true, message: "Logged out" });
+};
+
+exports.changePassword = async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+
+  if (!email || !oldPassword || !newPassword) {
+    return res.status(400).json(response.error("Semua field harus diisi."));
+  }
+
+  try {
+    // 1. Ambil user berdasarkan email
+    const result = await pool.query(
+      "SELECT id, password FROM users WHERE email = $1",
+      [email]
+    );
+    const user = result.rows[0];
+
+    if (!user) {
+      return res.status(404).json(response.error("User tidak ditemukan."));
+    }
+
+    // 2. Cek password lama
+    const match = await bcrypt.compare(oldPassword, user.password);
+    if (!match) {
+      return res.status(401).json(response.error("Password lama salah."));
+    }
+
+    // 3. Hash password baru
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // 4. Update password di database
+    await pool.query("UPDATE users SET password = $1 WHERE id = $2", [
+      hashedPassword,
+      user.id,
+    ]);
+
+    return res.json(response.success("Password berhasil diganti."));
+  } catch (err) {
+    console.error("Change password error:", err);
+    return res.status(500).json(response.error("Terjadi kesalahan server."));
+  }
 };

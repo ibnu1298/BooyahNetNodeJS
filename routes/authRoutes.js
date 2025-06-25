@@ -9,5 +9,6 @@ router.post("/refresh-token", auth.refreshToken);
 router.post("/login-wa", auth.loginWhatsAppWithOTP);
 router.post("/login-email", auth.loginEmailWithOTP);
 router.post("/logout", auth.logout);
+router.post("/change-password", auth.changePassword);
 
 module.exports = router;
