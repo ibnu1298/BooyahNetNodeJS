@@ -90,42 +90,98 @@ exports.getUserById = async (req, res) => {
   }
 };
 exports.updateUser = async (req, res) => {
+  const client = await pool.connect();
   try {
-    const { user_id, name } = req.body;
-    const modifiedBy = req.user?.email || "unknown"; // userId dari token
+    const { user_id, name, email, address, wa_number } = req.body;
+    const modifiedBy = req.user?.email || "unknown";
 
-    // Validasi: name tidak boleh kosong
-    if (!name || name.trim() === "") {
-      return res.status(400).json(response.error("Name is required"));
-    }
+    // Validasi wajib isi
+    if (!user_id)
+      return res.status(400).json(response.error("User ID wajib diisi"));
+    if (!name || name.trim() === "")
+      return res.status(400).json(response.error("Nama wajib diisi"));
+    if (!email || email.trim() === "")
+      return res.status(400).json(response.error("Email wajib diisi"));
+    if (!wa_number || wa_number.trim() === "")
+      return res.status(400).json(response.error("Nomor WhatsApp wajib diisi"));
 
-    // Cek user target ada
-    const result = await pool.query(
+    await client.query("BEGIN");
+
+    // Cek user ada
+    const userResult = await client.query(
       "SELECT * FROM users WHERE id = $1 AND row_status = true",
       [user_id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json(response.error("User not found"));
+    if (userResult.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json(response.error("User tidak ditemukan"));
     }
 
-    // Update user
-    const updated = await pool.query(
+    // Validasi nomor WA sudah terverifikasi dan tidak duplikat
+    const [otpRes, duplicatePhoneRes] = await Promise.all([
+      client.query(
+        `SELECT * FROM otp_codes 
+         WHERE phone = $1 AND is_used = TRUE 
+         ORDER BY created_at DESC LIMIT 1`,
+        [wa_number]
+      ),
+      client.query(
+        `SELECT * FROM user_details 
+         WHERE phone = $1 AND user_id != $2`,
+        [wa_number, user_id]
+      ),
+    ]);
+
+    if (otpRes.rows.length === 0) {
+      await client.query("ROLLBACK");
+      return res
+        .status(400)
+        .json(response.error("Nomor WhatsApp belum terverifikasi"));
+    }
+
+    if (duplicatePhoneRes.rows.length > 0) {
+      await client.query("ROLLBACK");
+      return res
+        .status(409)
+        .json(response.error("Nomor WhatsApp sudah digunakan"));
+    }
+
+    // Update users
+    const updatedUser = await client.query(
       `UPDATE users
-       SET name = $1, modified_at = CURRENT_TIMESTAMP, modified_by = $2
-       WHERE id = $3
+       SET name = $1, email = LOWER($2), modified_at = CURRENT_TIMESTAMP, modified_by = $3
+       WHERE id = $4
        RETURNING *`,
-      [name, modifiedBy, user_id]
+      [name, email, modifiedBy, user_id]
     );
 
-    res
-      .status(200)
-      .json(response.success("User updated successfully", updated.rows[0]));
+    // Upsert user_details
+    await client.query(
+      `INSERT INTO user_details (user_id, phone,verify_phone, address, billing_date, created_by)
+       VALUES ($1, $2,TRUE, $3, CURRENT_DATE, $4)
+       ON CONFLICT (user_id) DO UPDATE 
+       SET phone = $2,verify_phone = TRUE, address = $3, modified_at = CURRENT_TIMESTAMP, modified_by = $4`,
+      [user_id, wa_number, address, modifiedBy]
+    );
+
+    await client.query("COMMIT");
+
+    return res.status(200).json(
+      response.success("User berhasil diperbarui", {
+        ...updatedUser.rows[0],
+        phone: wa_number,
+        address,
+      })
+    );
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error(err);
-    res.status(500).json(response.error("Server error"));
+    return res.status(500).json(response.error("Terjadi kesalahan server"));
+  } finally {
+    client.release();
   }
 };
+
 exports.updateUserRole = async (req, res) => {
   try {
     const { user_id, role_id } = req.body;
