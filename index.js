@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const cron = require("node-cron");
+const reminderUserJob = require("./jobs/ReminderUser");
 
 const usersRoutes = require("./routes/userRoutes");
 const paymentsRoutes = require("./routes/paymentRoutes");
@@ -36,10 +37,12 @@ db.query(initSql)
   .then(() => console.log("✅ Tables checked/created"))
   .catch((err) => console.error("❌ Init SQL error:", err));
 
-cron.schedule("* * * * *", () => {
-  console.log("Jalan setiap 1 menit: ", new Date().toISOString());
-  // jalankan fungsi yang kamu mau di sini
-});
+// cron.schedule("*/10 * * * * *", () => {
+//   console.log("🕐 Menjalankan job ReminderUser...");
+//   reminderUserJob();
+// });
+
+// console.log("🟢 Cron job started.");
 
 // | CRON          | Arti                                |
 // | ------------- | ----------------------------------- |

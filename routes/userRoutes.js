@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const users = require("../controllers/usersController");
+const users = require("../Controllers/UsersController");
 const verifyToken = require("../middleware/authMiddleware");
 const checkRole = require("../middleware/checkRole");
 
@@ -10,6 +10,12 @@ router.get(
   verifyToken,
   checkRole("Admin"),
   users.getAllUsersWithPayments
+);
+router.put(
+  "/update-billing-date",
+  verifyToken,
+  checkRole("Admin"),
+  users.updateBillingDate
 );
 router.get("/:id", verifyToken, users.getUserById);
 router.put("/update", verifyToken, users.updateUser);

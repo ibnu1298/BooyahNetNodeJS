@@ -1,17 +1,19 @@
 const pool = require("../db");
 const response = require("../utils/response");
+const generateRandomPhone = require("../utils/generate");
 
 exports.getAllUsers = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT 
-        users.id,
+      `SELECT         
+        users.id user_id,
         users.name,
         users.email,
         users.verify_email,
         ud.phone,
         ud.verify_phone,
         ud.address,
+        ud.billing_date,
         roles.name AS role_name
       FROM users
       INNER JOIN roles ON roles.id = users.role_id
@@ -27,7 +29,6 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json(response.error("Server error"));
   }
 };
-
 exports.getAllUsersWithPayments = async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -54,7 +55,6 @@ exports.getAllUsersWithPayments = async (req, res) => {
     res.status(500).json(response.error("Server error"));
   }
 };
-
 exports.getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -181,7 +181,6 @@ exports.updateUser = async (req, res) => {
     client.release();
   }
 };
-
 exports.updateUserRole = async (req, res) => {
   try {
     const { user_id, role_id } = req.body;
@@ -229,7 +228,6 @@ exports.updateInsertUserDetail = async (req, res) => {
   try {
     const { user_id, phone, address, billing_date } = req.body;
     const email_user = req.user?.email;
-    console.log(email_user);
     if (!email_user || email_user.trim() === "") {
       return res.status(403).json(response.error("user not allowed"));
     }
@@ -304,5 +302,69 @@ exports.updateInsertUserDetail = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json(response.error("Server error"));
+  }
+};
+exports.updateBillingDate = async (req, res) => {
+  const { user_id, billing_date } = req.body;
+  const modifiedBy = req.user?.email || "system";
+
+  if (!user_id || !billing_date) {
+    return res.status(400).json({
+      success: false,
+      message: "user_id dan billing_date wajib diisi",
+    });
+  }
+
+  try {
+    // Cek apakah user_details sudah ada
+    const check = await pool.query(
+      "SELECT id FROM user_details WHERE user_id = $1",
+      [user_id]
+    );
+
+    if (check.rows.length === 0) {
+      const phone = await generateRandomPhone();
+
+      // Insert baru
+      const insertResult = await pool.query(
+        `
+        INSERT INTO user_details (user_id, phone, billing_date, created_by)
+        VALUES ($1, $2, $3, $4)
+        RETURNING *;
+        `,
+        [user_id, phone, billing_date, modifiedBy]
+      );
+
+      return res.status(201).json({
+        success: true,
+        message: "Billing date inserted",
+        data: insertResult.rows[0],
+      });
+    } else {
+      // Update billing_date
+      const updateResult = await pool.query(
+        `
+        UPDATE user_details
+        SET billing_date = $1,
+            modified_at = CURRENT_TIMESTAMP,
+            modified_by = $2
+        WHERE user_id = $3
+        RETURNING *;
+        `,
+        [billing_date, modifiedBy, user_id]
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Billing date updated",
+        data: updateResult.rows[0],
+      });
+    }
+  } catch (err) {
+    console.error("Error updateBillingDate:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };

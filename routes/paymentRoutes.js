@@ -8,17 +8,13 @@ router.get("/", verifyToken, checkRole("Admin"), payment.getAllPayments);
 router.get("/:id", verifyToken, payment.getPaymentById);
 router.get("/users/:user_id", verifyToken, payment.getPaymentByUserId);
 router.post("/", verifyToken, checkRole("Admin"), payment.createPayment);
+router.post("/update", verifyToken, checkRole("Admin"), payment.UpdatePayment);
 router.post(
-  "/update-is-paid",
+  "/generatepdf",
   verifyToken,
   checkRole("Admin"),
-  payment.UpdateIsPaidPayment
+  payment.generateReceipt
 );
-router.post(
-  "/update-paid-at",
-  verifyToken,
-  checkRole("Admin"),
-  payment.UpdatePaidAtPayment
-);
+router.post("/send-kwitansi", verifyToken, checkRole("Admin"), payment.sendPDF);
 
 module.exports = router;

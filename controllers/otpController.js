@@ -4,9 +4,11 @@ const nodemailer = require("nodemailer");
 const fetch = require("node-fetch");
 const { verify } = require("jsonwebtoken");
 const { generateOtpEmailHtml } = require("../utils/emailTemplates");
+const { formatBillingDate, formatRupiah } = require("../utils/commonFunctions");
 require("dotenv").config();
 const { v4: uuidv4 } = require("uuid");
-const baseUrl = process.env.WA_BOT_BASE_URL;
+const { List } = require("whatsapp-web.js");
+const baseUrl = "http://localhost:3005"; //process.env.WA_BOT_BASE_URL;
 exports.createSendEmailOTP = async (req, res) => {
   try {
     const { email } = req.body;
@@ -68,7 +70,6 @@ exports.createSendEmailOTP = async (req, res) => {
     return res.status(500).json(response.error("Gagal mengirim OTP"));
   }
 };
-
 exports.createSendWhatsAppOTP = async (req, res) => {
   try {
     const { wa_number } = req.body;
@@ -138,7 +139,6 @@ exports.createSendWhatsAppOTP = async (req, res) => {
     return res.status(500).json(response.error("Gagal mengirim OTP"));
   }
 };
-
 exports.verificationEmail = async (req, res) => {
   try {
     const { email, otp } = req.body;
@@ -203,7 +203,6 @@ exports.verificationEmail = async (req, res) => {
     return res.status(500).json(response.error("Gagal verifikasi Email"));
   }
 };
-
 exports.verificationWhatsApp = async (req, res) => {
   try {
     const { wa_number, otp } = req.body;
@@ -273,7 +272,6 @@ exports.verificationWhatsApp = async (req, res) => {
       .json(response.error("Gagal verifikasi Nomor WhatsApp"));
   }
 };
-
 exports.sendOtpToUnregisteredWhatsApp = async (req, res) => {
   try {
     let { wa_number } = req.body;
@@ -473,4 +471,32 @@ exports.verifyOTPUnregistered = async (req, res) => {
     console.error("Gagal verifikasi OTP:", err);
     return res.status(500).json(response.error("Server error"));
   }
+};
+exports.sendMessageList = async (req, res) => {
+  const { wa_number, user_id } = req.body;
+
+  const text = await getMessageReminder(user_id);
+  console.log(text);
+
+  // kirim ke service /send
+  const sendRes = await fetch(`${baseUrl}/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      to: `${wa_number}`,
+      message: text,
+    }),
+  });
+
+  if (!sendRes.ok) {
+    const errMsg = await sendRes.text();
+    console.error("Gagal kirim ke WA:", errMsg);
+    return res
+      .status(500)
+      .json(response.error("Gagal mengirim pesan WhatsApp"));
+  }
+
+  return res
+    .status(200)
+    .json(response.success(`List berhasil dikirim ke WA: ${wa_number}`));
 };

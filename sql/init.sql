@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS roles (
   modified_by VARCHAR(100),
   row_status BOOLEAN DEFAULT TRUE
 );
---DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name VARCHAR(100) NOT NULL,
@@ -25,13 +25,15 @@ CREATE TABLE IF NOT EXISTS users (
   modified_by VARCHAR(100)  NULL,
   row_status BOOLEAN DEFAULT TRUE
 );
---DROP TABLE IF EXISTS payments CASCADE;
+DROP TABLE IF EXISTS payments CASCADE;
 CREATE TABLE IF NOT EXISTS  payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   amount NUMERIC NOT NULL,
   paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   is_paid BOOLEAN DEFAULT FALSE NOT NULL,
+  billing_date_for DATE DEFAULT CURRENT_DATE NOT NULL,
+  payment_number BIGSERIAL UNIQUE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   created_by VARCHAR(100) NOT NULL,
   modified_at TIMESTAMP,
@@ -39,7 +41,7 @@ CREATE TABLE IF NOT EXISTS  payments (
   row_status BOOLEAN DEFAULT TRUE
 );
 
---DROP TABLE IF EXISTS user_details CASCADE;
+DROP TABLE IF EXISTS user_details CASCADE;
 CREATE TABLE IF NOT EXISTS user_details (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES users(id) ON DELETE CASCADE UNIQUE NOT NULL,
@@ -47,13 +49,15 @@ CREATE TABLE IF NOT EXISTS user_details (
   verify_phone BOOLEAN DEFAULT FALSE NOT NULL,
   address TEXT NULL,
   billing_date DATE NOT NULL,
+  package numeric DEFAULT 100000 NOT NULL,
+  is_subscribe BOOLEAN NOT NULL DEFAULT FALSE,
   created_by VARCHAR(100) NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
   modified_at TIMESTAMP NULL,
   modified_by VARCHAR(100) NULL,
   row_status BOOLEAN DEFAULT TRUE
 );
---DROP TABLE IF EXISTS otp_codes CASCADE;
+DROP TABLE IF EXISTS otp_codes CASCADE;
 CREATE TABLE IF NOT EXISTS otp_codes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE NULL,
@@ -79,15 +83,5 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_email_lower ON users (LOWER(email));
 CREATE UNIQUE INDEX IF NOT EXISTS unique_name_lower ON roles (LOWER(name));
 
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM information_schema.columns 
-    WHERE table_name='payments' AND column_name='is_paid'
-  ) THEN
-    ALTER TABLE payments ADD COLUMN is_paid BOOLEAN DEFAULT FALSE NOT NULL;
-  END IF;
-END
-$$;
 
 

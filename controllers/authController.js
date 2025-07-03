@@ -148,9 +148,10 @@ exports.login = async (req, res) => {
     const { email, password } = req.body;
 
     const result = await pool.query(
-      `SELECT users.*, roles.name AS role_name
+      `SELECT users.*, roles.name AS role_name, ud.phone
         FROM users
         JOIN roles ON users.role_id = roles.id
+        LEFT JOIN user_details ud ON users.id = ud.user_id
         WHERE LOWER(users.email) = LOWER($1)`,
       [email]
     );
@@ -282,7 +283,7 @@ exports.loginWhatsAppWithOTP = async (req, res) => {
 
     // Ambil user berdasarkan wa_number
     const { rows: userRows } = await pool.query(
-      `SELECT u.id, u.email, u.password, r.name AS role_name
+      `SELECT u.id, u.email, u.password, r.name AS role_name, ud.phone
        FROM users u
        JOIN roles r ON u.role_id = r.id
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status = TRUE
@@ -352,7 +353,7 @@ exports.loginEmailWithOTP = async (req, res) => {
 
     // Ambil user berdasarkan wa_number
     const { rows: userRows } = await pool.query(
-      `SELECT u.id, u.email, u.password, r.name AS role_name
+      `SELECT u.id, u.email, u.password, r.name AS role_name, ud.phone
        FROM users u
        JOIN roles r ON u.role_id = r.id
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status = TRUE
