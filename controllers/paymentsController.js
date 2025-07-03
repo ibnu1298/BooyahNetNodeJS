@@ -8,7 +8,7 @@ const {
   validateUpdatePaidAt,
 } = require("../utils/validators/paymentValidator");
 
-const baseUrl = "http://localhost:3005"; //process.env.WA_BOT_BASE_URL;
+const baseUrl = process.env.WA_BOT_BASE_URL;
 exports.getAllPayments = async (req, res) => {
   try {
     const { rows } = await pool.query(
