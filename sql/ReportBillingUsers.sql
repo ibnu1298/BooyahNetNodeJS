@@ -34,6 +34,7 @@ SELECT
 FROM users u 
 JOIN user_details ud ON ud.user_id = u.id
 LEFT JOIN payments p ON p.user_id = u.id  AND p.row_status = true 
--- WHERE p.is_paid = false 
--- ud.verify_phone = TRUE
+WHERE p.is_paid = false 
+AND ud.verify_phone = TRUE
+AND ud.is_subscribe = TRUE
 GROUP BY  u.id,u.name, ud.phone, ud.billing_date ORDER BY ud.billing_date

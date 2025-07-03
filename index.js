@@ -37,12 +37,18 @@ db.query(initSql)
   .then(() => console.log("✅ Tables checked/created"))
   .catch((err) => console.error("❌ Init SQL error:", err));
 
-// cron.schedule("*/10 * * * * *", () => {
-//   console.log("🕐 Menjalankan job ReminderUser...");
-//   reminderUserJob();
-// });
+cron.schedule(
+  "0 9 * * *",
+  () => {
+    console.log("🕐 Menjalankan job ReminderUser...");
+    reminderUserJob();
+  },
+  {
+    timezone: "Asia/Jakarta",
+  }
+);
 
-// console.log("🟢 Cron job started.");
+console.log("🟢 Cron job started.");
 
 // | CRON          | Arti                                |
 // | ------------- | ----------------------------------- |
