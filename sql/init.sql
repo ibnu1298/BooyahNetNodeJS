@@ -82,6 +82,16 @@ CREATE UNIQUE INDEX IF NOT EXISTS unique_email_lower ON users (LOWER(email));
 --DROP INDEX IF EXISTS unique_name_lower;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_name_lower ON roles (LOWER(name));
 
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM roles) THEN
+    INSERT INTO roles (name, description, created_by)
+    VALUES 
+      ('Admin', 'Role admin', 'system'),
+      ('User', 'Role user', 'system');
+  END IF;
+END
+$$;
 
 
 
