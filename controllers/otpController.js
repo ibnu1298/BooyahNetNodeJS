@@ -7,8 +7,7 @@ const { generateOtpEmailHtml } = require("../utils/emailTemplates");
 const { formatBillingDate, formatRupiah } = require("../utils/commonFunctions");
 require("dotenv").config();
 const { v4: uuidv4 } = require("uuid");
-const { List } = require("whatsapp-web.js");
-const baseUrl = "http://localhost:3005"; //process.env.WA_BOT_BASE_URL;
+const baseUrl = process.env.WA_BOT_BASE_URL;
 exports.createSendEmailOTP = async (req, res) => {
   try {
     const { email } = req.body;
