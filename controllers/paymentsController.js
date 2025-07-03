@@ -128,7 +128,7 @@ exports.UpdatePayment = async (req, res) => {
       [otp]
     );
     const { rows: payment } = await pool.query(
-      "SELECT * FROM payments WHERE id=$1 AND row_status = true",
+      "SELECT * FROM payments WHERE id = $1 AND row_status = true",
       [payment_id]
     );
     if (payment.length == 0) {
@@ -151,20 +151,32 @@ exports.UpdatePayment = async (req, res) => {
         .status(404)
         .json(response.error("Whatsapp Pelanggan belum terverifikasi"));
     }
-    // kirim whatsapp
-    const sendOtpRes = await fetch(`${baseUrl}/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        to: user[0].phone,
-        message: `Hallo Update Payment Berhasil`,
-      }),
+    let buffer = await createPdfKwitansi({
+      no: payment[0].payment_number,
+      receivedFrom: user[0].name,
+      amount: payment[0].amount,
+      paymentFor: "Untuk Pembayaran WIFI Bulan Mei 2025",
+      date: payment[0].paid_at,
+    });
+    buffer = Buffer.from(buffer);
+
+    const form = new FormData();
+    form.append("to", user[0].phone);
+    form.append("message", "Ini kwitansi Anda waw\nbisaaaa");
+    form.append("file", buffer, {
+      filename: `kwitansi_${Date.now()}.pdf`,
+      contentType: "application/pdf",
     });
 
-    if (!sendOtpRes.ok) {
+    try {
+      const sendRes = await axios.post(`${baseUrl}/send-file`, form, {
+        headers: form.getHeaders(),
+      });
+
+      console.log("Kirim WA berhasil:", sendRes.data);
+    } catch (err) {
       await client.query("ROLLBACK");
-      const errMsg = await sendOtpRes.text();
-      console.error("Gagal kirim ke WA:", errMsg);
+      console.error("Gagal kirim ke WA:", err.response?.data || err.message);
       return res
         .status(500)
         .json(response.error("Gagal mengirim pesan WhatsApp"));
@@ -192,7 +204,7 @@ exports.generateReceipt = async (req, res) => {
       no: "00123",
       receivedFrom: name,
       amount: amount,
-      paymentFor: "Untuk Pembayaran WIFI " + name,
+      paymentFor: "Untuk Pembayaran WIFI Bulan Mei 2025",
       date: date,
     });
 

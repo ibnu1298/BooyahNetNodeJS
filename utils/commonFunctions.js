@@ -32,3 +32,12 @@ exports.capitalizeString = (name) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(" ");
 };
+
+exports.generatePaymentNumber = (no) => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // bulan mulai dari 0
+  const paddedNo = String(no).padStart(6, "0");
+
+  return `${year}${month}${paddedNo}`;
+};
