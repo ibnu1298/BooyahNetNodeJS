@@ -18,7 +18,7 @@ exports.createPdfKwitansi = async ({
   const amountInWords = terbilang(amount) + " Rupiah";
   const cmToPt = (cm) => cm * 28.35;
   const doc = new PDFDocument({
-    size: [cmToPt(10), cmToPt(21)],
+    size: [cmToPt(9.5), cmToPt(21)],
     layout: "landscape",
     margin: 20,
   });
@@ -92,15 +92,15 @@ exports.createPdfKwitansi = async ({
     .font("Helvetica")
     .fontSize(10)
     .text(
-      `Jakarta, ${formatBillingDate(date) ?? "-"}`,
+      `Bogor, ${formatBillingDate(date) ?? "-"}`,
       430,
       startY + lineGap * 3
     );
-  doc.opacity(0.7).image("./image/signature.png", 430, startY + lineGap * 2.8, {
-    width: 100,
-  });
   doc.moveDown(3).text("Admin BooyahNet", 430, startY + lineGap * 5, {
     underline: true,
+  });
+  doc.opacity(0.7).image("./image/signature.png", 420, startY + lineGap * 2.7, {
+    width: 100,
   });
 
   // Amount box
@@ -108,7 +108,7 @@ exports.createPdfKwitansi = async ({
   doc.font("Helvetica-Oblique").fontSize(14).text("Jumlah Rp.", startX, boxY);
 
   doc
-    .rect(startX + 80, boxY - 5, 150, 20)
+    .rect(startX + 80, boxY - 5, 100, 20)
     .fill("#dddddd")
     .stroke();
 
@@ -120,7 +120,7 @@ exports.createPdfKwitansi = async ({
     .font("Helvetica-Oblique")
     .fontSize(9)
     .text(
-      "Terimakasih sudah melakukan pembayaran WIFI BOOYAHNET\nPastikan anda mendapatkan kwitansi setelah melakukan pembayaran",
+      "Terimakasih telah melakukan pembayaran WIFI BOOYAHNET\nPastikan anda mendapatkan kwitansi setelah melakukan pembayaran",
       0, // x
       startY + lineGap * 8, // y
       { align: "center", width: doc.page.width }

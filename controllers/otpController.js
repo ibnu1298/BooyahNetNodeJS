@@ -118,7 +118,7 @@ exports.createSendWhatsAppOTP = async (req, res) => {
       },
       body: JSON.stringify({
         to: phone,
-        message: `Kode OTP kamu adalah: *${otpCode}*\nJangan beritahu siapapun Kode hanya Berlaku hanya 5 Menit`,
+        message: `Kode OTP kamu adalah: *${otpCode}*\nJangan beritahu siapapun Kode hanya berlaku 5 Menit`,
       }),
     });
 
@@ -317,7 +317,7 @@ exports.sendOtpToUnregisteredWhatsApp = async (req, res) => {
       },
       body: JSON.stringify({
         to: wa_number,
-        message: `Kode OTP kamu adalah: *${otpCode}*\nJangan beritahu siapapun Kode hanya Berlaku hanya 5 Menit`,
+        message: `Kode OTP kamu adalah: *${otpCode}*\nJangan beritahu siapapun Kode hanya berlaku 5 Menit`,
       }),
     });
 
