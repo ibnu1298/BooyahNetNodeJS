@@ -12,14 +12,20 @@ router.get(
   users.getAllUsersWithPayments
 );
 router.put(
-  "/update-billing-date",
+  "/update-by-admin",
   verifyToken,
   checkRole("Admin"),
-  users.updateBillingDate
+  users.updateByAdmin
 );
+
 router.get("/:id", verifyToken, users.getUserById);
 router.put("/update", verifyToken, users.updateUser);
-router.post("/update-role", verifyToken, users.updateUserRole);
+router.post(
+  "/update-role",
+  verifyToken,
+  checkRole("Admin"),
+  users.updateUserRole
+);
 router.post(
   "/update-or-insert-user-detail",
   verifyToken,

@@ -1,3 +1,4 @@
+const { table } = require("pdfkit");
 const pool = require("../db");
 const {
   formatBillingDate,
@@ -8,14 +9,15 @@ const {
 const firstReminder = process.env.FIRST_REMINDER_AFTER;
 const secondReminder = process.env.SECOND_REMINDER_AFTER;
 const thirdReminder = process.env.THIRD_REMINDER_AFTER;
-
+const baseUrl = process.env.WA_BOT_BASE_URL;
 async function afterBilling(data) {
   const reminders = [firstReminder, secondReminder, thirdReminder];
-
+  console.log("Menjalankan Job After Billing...");
   for (const days of reminders) {
-    console.log(`📢 Next Billing H-${days}`);
+    console.log(`📢 Reminder H+${days}`);
     await reminder(data, days);
   }
+  console.log("Job After Billing Selesai ✅");
 }
 
 module.exports = afterBilling;
@@ -24,17 +26,26 @@ async function reminder(data, days) {
   const filteredOverdueBilling = data.rows.filter(
     (row) => row.days_overdue == days && Number(row.unpaid_payments) > 0
   );
-
-  const names = filteredOverdueBilling.map((row) => row.name);
-  console.table(names);
-  console.log(
-    "total filteredOverdueBilling : " + filteredOverdueBilling.length
-  );
+  const names = filteredOverdueBilling.map((row) => row.name || "-").join(", ");
+  console.log(`${filteredOverdueBilling.length} User - (${names})`);
 
   for (const user of filteredOverdueBilling) {
     const message = await getMessageReminder(user.user_id, days);
-    console.log("\n");
-    console.log(message);
+    try {
+      await fetch(`${baseUrl}/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: user.phone,
+          message: message,
+        }),
+      });
+      console.log(`Successfully Send Reminder to ${user.name}`);
+    } catch (error) {
+      console.log(`Failed Send Reminder to ${user.name}, Error : ${error}`);
+    }
   }
 }
 
@@ -71,15 +82,12 @@ async function getMessageReminder(user_id, reminderDays) {
       AND row_status = TRUE`,
     [user_id]
   );
-  console.table(latePayments);
   const [mildlyLatePayments, veryLatePayments] = [
     latePayments.filter(
       (p) => p.overdue_days > 0 && p.overdue_days <= thirdReminder
     ),
     latePayments.filter((p) => p.overdue_days > thirdReminder),
   ];
-  console.table(mildlyLatePayments, ["id", "billing_date_for", "overdue_days"]);
-  console.table(veryLatePayments, ["id", "billing_date_for", "overdue_days"]);
 
   const totalAmount = payments.reduce(
     (acc, item) => acc + Number(item.amount || 0),

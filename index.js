@@ -38,7 +38,7 @@ db.query(initSql)
   .catch((err) => console.error("❌ Init SQL error:", err));
 
 cron.schedule(
-  "0 9 * * *",
+  "0 7 * * *",
   () => {
     console.log("🕐 Menjalankan job ReminderUser...");
     reminderUserJob();
