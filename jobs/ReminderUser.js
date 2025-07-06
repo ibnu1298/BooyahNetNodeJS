@@ -18,16 +18,6 @@ async function reminderUserJob() {
 
     let result = await pool.query(query);
 
-    console.log("📢 Hasil ReminderUser:");
-
-    console.table(
-      result.rows.map((row) => ({
-        ...row,
-        billing_date: formatToIndo(row.billing_date),
-        next_billing_date: formatToIndo(row.next_billing_date),
-        unpaid_payments: Number(row.unpaid_payments),
-      }))
-    );
     const filteredNextBilling = result.rows.filter(
       (row) => row.days_until_next_billing <= firstReminder
     );
@@ -76,15 +66,15 @@ async function reminderUserJob() {
       }
     }
     result = await pool.query(query);
-    console.table(
-      result.rows.map((row) => ({
-        ...row,
-        billing_date: formatToIndo(row.billing_date),
-        next_billing_date: formatToIndo(row.next_billing_date),
-        unpaid_payments: Number(row.unpaid_payments),
-      }))
-    );
-    // await beforeBilling(result);
+    // console.table(
+    //   result.rows.map((row) => ({
+    //     ...row,
+    //     billing_date: formatToIndo(row.billing_date),
+    //     next_billing_date: formatToIndo(row.next_billing_date),
+    //     unpaid_payments: Number(row.unpaid_payments),
+    //   }))
+    // );
+    await beforeBilling(result);
     await afterBilling(result);
   } catch (error) {
     console.error("❌ Gagal menjalankan ReminderUser:", error.message);

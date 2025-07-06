@@ -14,6 +14,7 @@ exports.getAllUsers = async (req, res) => {
         ud.verify_phone,
         ud.address,
         ud.billing_date,
+        ud.is_subscribe,
         roles.name AS role_name
       FROM users
       INNER JOIN roles ON roles.id = users.role_id
@@ -304,14 +305,19 @@ exports.updateInsertUserDetail = async (req, res) => {
     res.status(500).json(response.error("Server error"));
   }
 };
-exports.updateBillingDate = async (req, res) => {
-  const { user_id, billing_date } = req.body;
+exports.updateByAdmin = async (req, res) => {
+  const { user_id, billing_date, is_subscribe } = req.body;
   const modifiedBy = req.user?.email || "system";
 
+  if (typeof is_subscribe !== "boolean") {
+    return res
+      .status(400)
+      .json(response.error("is_subscribe harus berupa boolean"));
+  }
   if (!user_id || !billing_date) {
     return res.status(400).json({
       success: false,
-      message: "user_id dan billing_date wajib diisi",
+      message: "user_id, billing_date wajib diisi",
     });
   }
 
@@ -328,11 +334,11 @@ exports.updateBillingDate = async (req, res) => {
       // Insert baru
       const insertResult = await pool.query(
         `
-        INSERT INTO user_details (user_id, phone, billing_date, created_by)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO user_details (user_id, phone, billing_date, created_by, is_subscribe)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *;
         `,
-        [user_id, phone, billing_date, modifiedBy]
+        [user_id, phone, billing_date, modifiedBy, is_subscribe]
       );
 
       return res.status(201).json({
@@ -346,17 +352,18 @@ exports.updateBillingDate = async (req, res) => {
         `
         UPDATE user_details
         SET billing_date = $1,
+            is_subscribe = $4,
             modified_at = CURRENT_TIMESTAMP,
             modified_by = $2
         WHERE user_id = $3
         RETURNING *;
         `,
-        [billing_date, modifiedBy, user_id]
+        [billing_date, modifiedBy, user_id, is_subscribe]
       );
 
       return res.status(200).json({
         success: true,
-        message: "Billing date updated",
+        message: "User successfully updated",
         data: updateResult.rows[0],
       });
     }
