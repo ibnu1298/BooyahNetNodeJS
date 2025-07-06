@@ -8,14 +8,16 @@ const {
 const firstReminder = process.env.FIRST_REMINDER_BEFORE;
 const secondReminder = process.env.SECOND_REMINDER_BEFORE;
 const thirdReminder = process.env.THIRD_REMINDER_BEFORE;
-
+const baseUrl = process.env.WA_BOT_BASE_URL;
 async function beforeBilling(data) {
   const reminders = [firstReminder, secondReminder, thirdReminder, 0];
 
+  console.log("Menjalankan job Before Billing...");
   for (const days of reminders) {
-    console.log(`📢 Next Billing H-${days}`);
+    console.log(`📢 Reminder H-${days}`);
     await reminder(data, days);
   }
+  console.log("job Before Billing Selesai ✅");
 }
 
 module.exports = beforeBilling;
@@ -25,15 +27,25 @@ async function reminder(data, days) {
     (row) =>
       row.days_until_next_billing == days && Number(row.unpaid_payments) > 0
   );
-
-  const names = filteredNextBilling.map((row) => row.name);
-  console.table(names);
-  console.log("total filteredNextBilling : " + filteredNextBilling.length);
-
+  const names = filteredNextBilling.map((row) => row.name || "-").join(", ");
+  console.log(`${filteredNextBilling.length} User - (${names})`);
   for (const user of filteredNextBilling) {
     const message = await getMessageReminder(user.user_id, days);
-    console.log("\n");
-    console.log(message);
+    try {
+      await fetch(`${baseUrl}/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: user.phone,
+          message: message,
+        }),
+      });
+      console.log(`Successfully Send Reminder to ${user.name}`);
+    } catch (error) {
+      console.log(`Failed Send Reminder to ${user.name}, Error : ${error}`);
+    }
   }
 }
 
