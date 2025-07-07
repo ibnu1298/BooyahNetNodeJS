@@ -52,7 +52,7 @@ exports.getPaymentByUserId = async (req, res) => {
       WHERE user_id = $1 
       AND users.row_status = true 
       AND payments.row_status = true 
-      ORDER BY payments.created_at DESC`,
+      ORDER BY payments.is_paid, payments.billing_date_for DESC`,
       [user_id]
     );
 
@@ -143,7 +143,7 @@ exports.UpdatePayment = async (req, res) => {
       return res.status(404).json(response.error("Payment NotFound"));
     }
     const { rows: user } = await pool.query(
-      `SELECT u.name, ud.phone, ud.verify_phone FROM users u
+      `SELECT u.name, ud.phone, ud.verify_phone, ud.is_subscribe FROM users u
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status =  TRUE
        WHERE u.id=$1 AND u.row_status = TRUE`,
       [payment.user_id]
@@ -187,7 +187,7 @@ exports.UpdatePayment = async (req, res) => {
       filename: `${nameFile}.pdf`,
       contentType: "application/pdf",
     });
-    if (is_paid) {
+    if (is_paid && user[0].is_subscribe) {
       try {
         const sendRes = await axios.post(`${baseUrl}/send-file`, form, {
           headers: form.getHeaders(),
