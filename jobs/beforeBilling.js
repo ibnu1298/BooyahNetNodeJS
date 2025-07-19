@@ -78,11 +78,11 @@ async function getMessageReminder(user_id, reminderDays) {
   text = `*Hallo ${capitalizeString(users[0].name)}*\n`;
   if (nextPayments.length) {
     if (reminderDays > 0) {
-      text += `Mengingatkan bahwa *${reminderDays} hari lagi* adalah tanggal pembayaran tagihan *WIFI BOOYAH.NET*\npada hari ${formatBillingDateWithDay(
+      text += `Mengingatkan bahwa *${reminderDays} hari lagi* adalah tanggal pembayaran tagihan *WIFI BooyahNet*\npada hari ${formatBillingDateWithDay(
         nextPayments[0].billing_date_for
       )} - Rp ${formatRupiah(nextPayments[0].amount)}`;
     } else {
-      text += `Hari ini adalah tanggal pembayaran *WIFI BOOYAH.NET* sebesar Rp ${formatRupiah(
+      text += `Hari ini adalah tanggal pembayaran *WIFI BooyahNet* sebesar Rp ${formatRupiah(
         nextPayments[0].amount
       )}`;
     }
@@ -108,6 +108,6 @@ async function getMessageReminder(user_id, reminderDays) {
   if (payments.length > 1) {
     text += `\n*Total Tagihan : Rp ${formatRupiah(totalAmount)}*\n`;
   }
-  text += `\nApabila ada pertanyaan atau sudah melakukan pembayaran, mohon informasikan kepada kami.\nTerima kasih atas perhatian dan kerjasamanya 🙏`;
+  text += `\nApabila ada pertanyaan atau sudah melakukan pembayaran, mohon informasikan kepada kami.\nTerima kasih atas perhatian dan kerjasamanya 🙏\ncek pembayaran disini:\nhttps://booyahnet.vercel.app`;
   return text;
 }
