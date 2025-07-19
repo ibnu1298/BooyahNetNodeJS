@@ -66,14 +66,14 @@ async function reminderUserJob() {
       }
     }
     result = await pool.query(query);
-    // console.table(
-    //   result.rows.map((row) => ({
-    //     ...row,
-    //     billing_date: formatToIndo(row.billing_date),
-    //     next_billing_date: formatToIndo(row.next_billing_date),
-    //     unpaid_payments: Number(row.unpaid_payments),
-    //   }))
-    // );
+    console.table(
+      result.rows.map((row) => ({
+        ...row,
+        billing_date: formatToIndo(row.billing_date),
+        next_billing_date: formatToIndo(row.next_billing_date),
+        unpaid_payments: Number(row.unpaid_payments),
+      }))
+    );
     await beforeBilling(result);
     await afterBilling(result);
   } catch (error) {
