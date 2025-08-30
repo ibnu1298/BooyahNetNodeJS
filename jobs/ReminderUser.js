@@ -109,5 +109,6 @@ async function deleteDataPayment(data) {
     `;
 
     const result = await pool.query(query, [user.user_id]);
+    console.log(`Deleted rows: ${result.rowCount}`);
   }
 }
