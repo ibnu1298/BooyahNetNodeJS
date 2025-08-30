@@ -76,9 +76,38 @@ async function reminderUserJob() {
     );
     await beforeBilling(result);
     await afterBilling(result);
+    await deleteDataPayment(result);
   } catch (error) {
     console.error("❌ Gagal menjalankan ReminderUser:", error.message);
   }
 }
 
 module.exports = reminderUserJob;
+
+async function deleteDataPayment(data) {
+  for (const user of data.rows) {
+    const query = `
+      WITH unpaid AS (
+        SELECT id
+        FROM payments
+        WHERE user_id = $1
+          AND is_paid = false
+      ),
+      paid AS (
+        SELECT 
+          id,
+          ROW_NUMBER() OVER (ORDER BY billing_date_for DESC) AS rn,
+          (SELECT COUNT(*) FROM unpaid) AS unpaid_count
+        FROM payments
+        WHERE user_id = $1
+          AND is_paid = true
+      )
+      DELETE FROM payments p
+      USING paid
+      WHERE p.id = paid.id
+        AND paid.rn > GREATEST(0, 5 - paid.unpaid_count);
+    `;
+
+    const result = await pool.query(query, [user.user_id]);
+  }
+}
