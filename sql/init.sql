@@ -93,5 +93,14 @@ BEGIN
 END
 $$;
 
-
-
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'user_details'
+      AND column_name = 'alias'
+  ) THEN
+    EXECUTE 'ALTER TABLE user_details ADD COLUMN alias VARCHAR(100) NULL';
+  END IF;
+END $$ LANGUAGE plpgsql;
