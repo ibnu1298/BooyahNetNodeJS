@@ -15,7 +15,8 @@ exports.getAllUsers = async (req, res) => {
         ud.address,
         ud.billing_date,
         ud.is_subscribe,
-        roles.name AS role_name
+        roles.name AS role_name,
+        ud.alias
       FROM users
       INNER JOIN roles ON roles.id = users.role_id
       LEFT JOIN user_details AS ud 
@@ -44,9 +45,12 @@ exports.getAllUsersWithPayments = async (req, res) => {
       FROM users
       INNER JOIN roles ON roles.id = users.role_id
       LEFT JOIN payments ON payments.user_id = users.id AND payments.row_status = true
+      LEFT JOIN user_details AS ud 
+        ON ud.user_id = users.id AND ud.row_status = TRUE
       WHERE 
         users.row_status = true 
         AND roles.row_status = true
+        AND ud.is_subscribe = true
         
       GROUP BY users.id, users.name, users.email, roles.name ORDER BY unpaid_payments DESC`
     );
@@ -69,7 +73,8 @@ exports.getUserById = async (req, res) => {
       ud.phone, 
       verify_phone, 
       address, 
-      billing_date 
+      billing_date,
+      ud.alias
       FROM users AS u
       LEFT JOIN user_details AS ud 
         ON ud.user_id = u.id AND ud.row_status = TRUE
@@ -306,7 +311,7 @@ exports.updateInsertUserDetail = async (req, res) => {
   }
 };
 exports.updateByAdmin = async (req, res) => {
-  const { user_id, billing_date, is_subscribe } = req.body;
+  const { user_id, billing_date, is_subscribe, alias } = req.body;
   const modifiedBy = req.user?.email || "system";
 
   if (typeof is_subscribe !== "boolean") {
@@ -334,11 +339,11 @@ exports.updateByAdmin = async (req, res) => {
       // Insert baru
       const insertResult = await pool.query(
         `
-        INSERT INTO user_details (user_id, phone, billing_date, created_by, is_subscribe)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO user_details (user_id, phone, billing_date, created_by, is_subscribe, alias)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *;
         `,
-        [user_id, phone, billing_date, modifiedBy, is_subscribe]
+        [user_id, phone, billing_date, modifiedBy, is_subscribe, alias]
       );
 
       return res.status(201).json({
@@ -353,12 +358,13 @@ exports.updateByAdmin = async (req, res) => {
         UPDATE user_details
         SET billing_date = $1,
             is_subscribe = $4,
+            alias = $5,
             modified_at = CURRENT_TIMESTAMP,
             modified_by = $2
         WHERE user_id = $3
         RETURNING *;
         `,
-        [billing_date, modifiedBy, user_id, is_subscribe]
+        [billing_date, modifiedBy, user_id, is_subscribe, alias]
       );
 
       return res.status(200).json({
