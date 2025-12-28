@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -25,5 +26,8 @@
   "description": "��#\u0000 \u0000B\u0000o\u0000o\u0000y\u0000a\u0000h\u0000N\u0000e\u0000t\u0000N\u0000o\u0000d\u0000e\u0000J\u0000S\u0000\r\u0000 \u0000",
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
 }
