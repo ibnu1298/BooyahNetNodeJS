@@ -6,17 +6,37 @@ SELECT
   
   -- Ambil tanggal tagihan selanjutnya
   CASE
-    WHEN CURRENT_DATE <= make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-    THEN make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-    ELSE make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int + 1, EXTRACT(DAY FROM ud.billing_date)::int)
+    WHEN CURRENT_DATE <= (
+      date_trunc('month', CURRENT_DATE)
+      + (EXTRACT(DAY FROM ud.billing_date)::int - 1) * interval '1 day'
+    )::date
+    THEN (
+      date_trunc('month', CURRENT_DATE)
+      + (EXTRACT(DAY FROM ud.billing_date)::int - 1) * interval '1 day'
+    )::date
+    ELSE (
+      date_trunc('month', CURRENT_DATE)
+      + interval '1 month'
+      + (EXTRACT(DAY FROM ud.billing_date)::int - 1) * interval '1 day'
+    )::date
   END AS next_billing_date,
 
   -- Hitung berapa hari lagi ke tagihan
   (
     CASE
-      WHEN CURRENT_DATE <= make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-      THEN make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-      ELSE make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int + 1, EXTRACT(DAY FROM ud.billing_date)::int)
+      WHEN CURRENT_DATE <= (
+        date_trunc('month', CURRENT_DATE)
+        + (EXTRACT(DAY FROM ud.billing_date)::int - 1) * interval '1 day'
+      )::date
+      THEN (
+        date_trunc('month', CURRENT_DATE)
+        + (EXTRACT(DAY FROM ud.billing_date)::int - 1) * interval '1 day'
+      )::date
+      ELSE (
+        date_trunc('month', CURRENT_DATE)
+        + interval '1 month'
+        + (EXTRACT(DAY FROM ud.billing_date)::int - 1) * interval '1 day'
+      )::date
     END
     - CURRENT_DATE
   ) AS days_until_next_billing,
