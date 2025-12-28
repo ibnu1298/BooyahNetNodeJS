@@ -31,11 +31,33 @@ async function reminderUserJob() {
         JOIN user_details ud ON ud.user_id = p.user_id 
         WHERE p.user_id = $1 
           AND p.billing_date_for = (
-              CASE 
-                WHEN CURRENT_DATE <= make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-                THEN make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-                ELSE (make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int) + interval '1 month')::date
-              END
+            CASE 
+              WHEN CURRENT_DATE <= (
+                date_trunc('month', CURRENT_DATE)
+                + (LEAST(
+                    EXTRACT(DAY FROM ud.billing_date)::int,
+                    EXTRACT(DAY FROM (date_trunc('month', CURRENT_DATE) + interval '1 month - 1 day'))
+                  ) - 1
+                ) * interval '1 day'
+              )::date
+              THEN (
+                date_trunc('month', CURRENT_DATE)
+                + (LEAST(
+                    EXTRACT(DAY FROM ud.billing_date)::int,
+                    EXTRACT(DAY FROM (date_trunc('month', CURRENT_DATE) + interval '1 month - 1 day'))
+                  ) - 1
+                ) * interval '1 day'
+              )::date
+              ELSE (
+                date_trunc('month', CURRENT_DATE)
+                + interval '1 month'
+                + (LEAST(
+                    EXTRACT(DAY FROM ud.billing_date)::int,
+                    EXTRACT(DAY FROM (date_trunc('month', CURRENT_DATE) + interval '2 month - 1 day'))
+                  ) - 1
+                ) * interval '1 day'
+              )::date
+            END
           )
           AND p.row_status = TRUE
         `,
@@ -48,9 +70,40 @@ async function reminderUserJob() {
           SELECT 
             $1,
             CASE 
-              WHEN CURRENT_DATE <= make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-              THEN make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int)
-              ELSE (make_date(EXTRACT(YEAR FROM CURRENT_DATE)::int, EXTRACT(MONTH FROM CURRENT_DATE)::int, EXTRACT(DAY FROM ud.billing_date)::int) + interval '1 month')::date
+              WHEN CURRENT_DATE <= (
+                date_trunc('month', CURRENT_DATE)
+                + (
+                    LEAST(
+                      EXTRACT(DAY FROM ud.billing_date)::int,
+                      EXTRACT(
+                        DAY FROM (date_trunc('month', CURRENT_DATE) + interval '1 month - 1 day')
+                      )
+                    ) - 1
+                  ) * interval '1 day'
+              )::date
+              THEN (
+                date_trunc('month', CURRENT_DATE)
+                + (
+                    LEAST(
+                      EXTRACT(DAY FROM ud.billing_date)::int,
+                      EXTRACT(
+                        DAY FROM (date_trunc('month', CURRENT_DATE) + interval '1 month - 1 day')
+                      )
+                    ) - 1
+                  ) * interval '1 day'
+              )::date
+              ELSE (
+                date_trunc('month', CURRENT_DATE)
+                + interval '1 month'
+                + (
+                    LEAST(
+                      EXTRACT(DAY FROM ud.billing_date)::int,
+                      EXTRACT(
+                        DAY FROM (date_trunc('month', CURRENT_DATE) + interval '2 month - 1 day')
+                      )
+                    ) - 1
+                  ) * interval '1 day'
+              )::date
             END,
             FALSE,
             ud.package,

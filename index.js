@@ -40,7 +40,10 @@ db.query(initSql)
 cron.schedule(
   "0 7 * * *",
   () => {
-    console.log("🕐 Menjalankan job ReminderUser...");
+    console.log(
+      "🕐 Menjalankan job ReminderUser...",
+      new Date().toLocaleTimeString()
+    );
     reminderUserJob();
   },
   {
