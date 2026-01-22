@@ -24,7 +24,7 @@ module.exports = afterBilling;
 
 async function reminder(data, days) {
   const filteredOverdueBilling = data.rows.filter(
-    (row) => row.days_overdue == days && Number(row.unpaid_payments) > 0
+    (row) => row.days_overdue == days && Number(row.unpaid_payments) > 0,
   );
   const names = filteredOverdueBilling.map((row) => row.name || "-").join(", ");
   console.log(`${filteredOverdueBilling.length} User - (${names})`);
@@ -32,16 +32,16 @@ async function reminder(data, days) {
   for (const user of filteredOverdueBilling) {
     const message = await getMessageReminder(user.user_id, days);
     try {
-      await fetch(`${baseUrl}/send`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          to: user.phone,
-          message: message,
-        }),
-      });
+      // await fetch(`${baseUrl}/send`, {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     to: user.phone,
+      //     message: message,
+      //   }),
+      // });
       console.log(`Successfully Send Reminder to ${user.name}`);
     } catch (error) {
       console.log(`Failed Send Reminder to ${user.name}, Error : ${error}`);
@@ -53,17 +53,17 @@ async function getMessageReminder(user_id, reminderDays) {
   let text = "";
   const { rows: users } = await pool.query(
     "SELECT * FROM users WHERE id = $1 ",
-    [user_id]
+    [user_id],
   );
   if (!users.length) return text;
 
   const { rows: payments } = await pool.query(
     "SELECT id, user_id, billing_date_for, amount, is_paid FROM payments WHERE user_id = $1 AND is_paid = FALSE AND row_status = TRUE ORDER BY billing_date_for DESC",
-    [user_id]
+    [user_id],
   );
   const { rows: paymentsIsPaid } = await pool.query(
     "SELECT id, user_id, billing_date_for, amount, is_paid FROM payments WHERE user_id = $1 AND is_paid = TRUE AND row_status = TRUE ORDER BY billing_date_for DESC",
-    [user_id]
+    [user_id],
   );
 
   const { rows: latePayments } = await pool.query(
@@ -80,25 +80,25 @@ async function getMessageReminder(user_id, reminderDays) {
       AND is_paid = FALSE 
       AND billing_date_for < CURRENT_DATE
       AND row_status = TRUE`,
-    [user_id]
+    [user_id],
   );
   const [mildlyLatePayments, veryLatePayments] = [
     latePayments.filter(
-      (p) => p.overdue_days > 0 && p.overdue_days <= thirdReminder
+      (p) => p.overdue_days > 0 && p.overdue_days <= thirdReminder,
     ),
     latePayments.filter((p) => p.overdue_days > thirdReminder),
   ];
 
   const totalAmount = payments.reduce(
     (acc, item) => acc + Number(item.amount || 0),
-    0
+    0,
   );
 
   text = `*Hallo ${capitalizeString(users[0].name)}*\n`;
   if (mildlyLatePayments.length) {
     if (reminderDays > 0) {
       text += `Mengingatkan bahwa tanggal pembayaran tagihan *WIFI BooyahNet* terlambat *${reminderDays} hari* \npembayaran untuk hari ${formatBillingDateWithDay(
-        mildlyLatePayments[0].billing_date_for
+        mildlyLatePayments[0].billing_date_for,
       )} - Rp ${formatRupiah(mildlyLatePayments[0].amount)}\n`;
     }
     if (veryLatePayments.length > 0) {
@@ -111,7 +111,7 @@ async function getMessageReminder(user_id, reminderDays) {
       {
         month: "long", // bisa 'short' untuk Jun
         year: "numeric",
-      }
+      },
     )}*\n`;
     if (veryLatePayments.length > 0) {
       text += "tapi ";
@@ -123,14 +123,14 @@ async function getMessageReminder(user_id, reminderDays) {
     text += `masih ada ${veryLatePayments.length} tagihan yang belum di bayar\n\nBerikut tagihan nya:\n`;
     veryLatePayments.forEach((item, index) => {
       text += `• ${formatBillingDate(item.billing_date_for)} :Rp ${formatRupiah(
-        item.amount
+        item.amount,
       )}\n`;
     });
   } else if (mildlyLatePayments.length && veryLatePayments.length == 1) {
     text += `masih ada ${
       veryLatePayments.length
     } tagihan yang belum di bayar di tanggal ${formatBillingDate(
-      veryLatePayments[0].billing_date_for
+      veryLatePayments[0].billing_date_for,
     )} - Rp ${formatRupiah(veryLatePayments[0].amount)}\n`;
   }
   if (payments.length > 1) {
