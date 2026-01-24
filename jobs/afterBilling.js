@@ -32,16 +32,16 @@ async function reminder(data, days) {
   for (const user of filteredOverdueBilling) {
     const message = await getMessageReminder(user.user_id, days);
     try {
-      // await fetch(`${baseUrl}/send`, {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     to: user.phone,
-      //     message: message,
-      //   }),
-      // });
+      await fetch(`${baseUrl}/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: user.phone,
+          message: message,
+        }),
+      });
       console.log(`Successfully Send Reminder to ${user.name}`);
     } catch (error) {
       console.log(`Failed Send Reminder to ${user.name}, Error : ${error}`);

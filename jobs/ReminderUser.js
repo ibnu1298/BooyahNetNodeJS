@@ -19,7 +19,7 @@ async function reminderUserJob() {
     let result = await pool.query(query);
 
     const filteredNextBilling = result.rows.filter(
-      (row) => row.days_until_next_billing <= firstReminder
+      (row) => row.days_until_next_billing <= firstReminder,
     );
 
     for (const user of filteredNextBilling) {
@@ -61,7 +61,7 @@ async function reminderUserJob() {
           )
           AND p.row_status = TRUE
         `,
-        [user_id]
+        [user_id],
       );
 
       if (check.rows.length === 0) {
@@ -113,7 +113,7 @@ async function reminderUserJob() {
           FROM user_details ud 
           WHERE ud.user_id = $1 AND ud.row_status = TRUE
       `,
-          [user_id]
+          [user_id],
         );
         console.log(`✅ Insert payment untuk user ${user_id}`);
       }
@@ -125,7 +125,7 @@ async function reminderUserJob() {
         billing_date: formatToIndo(row.billing_date),
         next_billing_date: formatToIndo(row.next_billing_date),
         unpaid_payments: Number(row.unpaid_payments),
-      }))
+      })),
     );
     await beforeBilling(result);
     await afterBilling(result);
