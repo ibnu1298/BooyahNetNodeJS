@@ -76,7 +76,7 @@ exports.createPdfKwitansi = async ({
       startY + lineGap,
       {
         underline: true,
-      }
+      },
     );
 
   doc.font("Helvetica").text("Untuk pembayaran", startX, startY + lineGap * 2);
@@ -94,7 +94,7 @@ exports.createPdfKwitansi = async ({
     .text(
       `Bogor, ${formatBillingDate(date) ?? "-"}`,
       430,
-      startY + lineGap * 3
+      startY + lineGap * 3,
     );
   doc.moveDown(3).text("Admin BooyahNet", 430, startY + lineGap * 5, {
     underline: true,
@@ -123,7 +123,7 @@ exports.createPdfKwitansi = async ({
       "Terimakasih telah melakukan pembayaran WIFI BOOYAHNET\nPastikan anda mendapatkan kwitansi setelah melakukan pembayaran",
       0, // x
       startY + lineGap * 8, // y
-      { align: "center", width: doc.page.width }
+      { align: "center", width: doc.page.width },
     );
   doc.end();
 

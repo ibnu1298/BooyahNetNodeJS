@@ -35,20 +35,27 @@ const initSql = fs
 
 db.query(initSql)
   .then(() => console.log("✅ Tables checked/created"))
-  .catch((err) => console.error("❌ Init SQL error:", err));
+  .catch((err) => {
+    console.error("❌ Init SQL error:");
+    console.error("Message:", err.message);
+    console.error("Code:", err.code);
+    console.error("Detail:", err.detail);
+    console.error("Stack:", err.stack);
+  });
 
 cron.schedule(
   "0 7 * * *",
+  // "*/30 * * * * *",
   () => {
     console.log(
       "🕐 Menjalankan job ReminderUser...",
-      new Date().toLocaleTimeString()
+      new Date().toLocaleTimeString(),
     );
     reminderUserJob();
   },
   {
     timezone: "Asia/Jakarta",
-  }
+  },
 );
 
 console.log("🟢 Cron job started.");
