@@ -3,6 +3,14 @@ const path = require("path");
 const pool = require("../db");
 const beforeBilling = require("./beforeBilling");
 const afterBilling = require("./afterBilling");
+const { createPdfKwitansi } = require("../utils/generatePDF");
+const axios = require("axios");
+const FormData = require("form-data");
+const {
+  formatBillingDate,
+  capitalizeString,
+} = require("../utils/commonFunctions");
+const { Pool } = require("pg");
 const firstReminder = process.env.FIRST_REMINDER_BEFORE;
 const formatToIndo = (date) => {
   return new Date(date).toLocaleDateString("id-ID", {
@@ -127,6 +135,7 @@ async function reminderUserJob() {
         unpaid_payments: Number(row.unpaid_payments),
       })),
     );
+    await sendReceipt();
     await beforeBilling(result);
     await afterBilling(result);
     await deleteDataPayment(result);
@@ -163,5 +172,158 @@ async function deleteDataPayment(data) {
 
     const result = await pool.query(query, [user.user_id]);
     console.log(`Deleted rows: ${result.rowCount}`);
+  }
+}
+
+async function sendReceipt() {
+  const client = await pool.connect();
+
+  try {
+    console.log("Ambil data to sendReceipt");
+
+    // Ambil payment yang belum dikirim
+    const query = `
+      SELECT
+        p.id,
+        p.user_id,
+        p.amount,
+        p.paid_at,
+        p.billing_date_for,
+        p.payment_number
+      FROM payments p
+      WHERE p.is_paid = TRUE
+        AND p.is_send_receipt = FALSE
+        AND p.row_status = TRUE
+      ORDER BY p.paid_at ASC
+      LIMIT 50
+      FOR UPDATE SKIP LOCKED;
+    `;
+
+    await client.query("BEGIN");
+
+    const result = await client.query(query);
+
+    await client.query("COMMIT");
+
+    console.log(`Total payment ditemukan: ${result.rowCount}`);
+
+    for (const payment of result.rows) {
+      try {
+        const paymentFor = payment.billing_date_for
+          ? formatBillingDate(payment.billing_date_for, "id-ID", {
+              month: "long",
+              year: "numeric",
+            })
+          : "-";
+
+        // Ambil data user
+        const { rows: users } = await pool.query(
+          `
+          SELECT
+            u.name,
+            ud.phone,
+            ud.verify_phone,
+            ud.is_subscribe
+          FROM users u
+          LEFT JOIN user_details ud
+            ON ud.user_id = u.id
+            AND ud.row_status = TRUE
+          WHERE u.id = $1
+            AND u.row_status = TRUE
+          `,
+          [payment.user_id],
+        );
+
+        const user = users[0];
+
+        if (!user) {
+          console.log(`User tidak ditemukan: ${payment.user_id}`);
+          continue;
+        }
+
+        // Validasi nomor WhatsApp
+        if (!user.phone || !user.verify_phone || !user.is_subscribe) {
+          console.log(
+            `Skip receipt #${payment.payment_number}: WhatsApp tidak memenuhi syarat`,
+          );
+          continue;
+        }
+
+        const nameFile = `Kwitansi_BooyahNet_${paymentFor.replace(/\s+/g, "_")}`;
+
+        // Generate PDF
+        let buffer = await createPdfKwitansi({
+          no: payment.payment_number,
+          receivedFrom: user.name,
+          amount: payment.amount,
+          paymentFor: `WIFI Bulan ${paymentFor}`,
+          date: payment.paid_at,
+        });
+
+        buffer = Buffer.from(buffer);
+
+        // Prepare FormData
+        const form = new FormData();
+
+        form.append("to", user.phone);
+
+        form.append(
+          "message",
+          `Halo ${capitalizeString(user.name ?? "")}
+berikut kwitansi pembayaran WIFI bulan ${paymentFor}.
+Terima kasih telah melakukan pembayaran.`,
+        );
+
+        form.append("file", buffer, {
+          filename: `${nameFile}.pdf`,
+          contentType: "application/pdf",
+        });
+        const baseUrl = process.env.WA_BOT_BASE_URL;
+        // Kirim WhatsApp
+        const sendRes = await axios.post(`${baseUrl}/send-file`, form, {
+          headers: form.getHeaders(),
+          timeout: 30000,
+        });
+        console.log("sendres:");
+
+        console.log(sendRes.data);
+        // Pastikan API menyatakan pengiriman berhasil.
+        // Sesuaikan pengecekan ini dengan response API WhatsApp lo.
+        if (!sendRes.data || sendRes.data.success !== true) {
+          throw new Error(
+            sendRes.data?.message || "WhatsApp gagal mengirim file",
+          );
+        }
+
+        // Update status setelah berhasil dikirim
+        await pool.query(
+          `
+          UPDATE payments
+          SET
+            is_send_receipt = TRUE,
+            modified_at = CURRENT_TIMESTAMP,
+            modified_by = 'cron_job'
+          WHERE id = $1
+            AND is_send_receipt = FALSE;
+          `,
+          [payment.id],
+        );
+
+        console.log(
+          `Receipt berhasil dikirim: Payment #${payment.payment_number}`,
+        );
+      } catch (error) {
+        console.error(
+          `Failed sending receipt #${payment.payment_number}:`,
+          error.response?.data || error.message,
+        );
+
+        // Lanjut ke payment berikutnya
+      }
+    }
+  } catch (error) {
+    console.error("Send receipt error:", error);
+  } finally {
+    client.release();
   }
 }
