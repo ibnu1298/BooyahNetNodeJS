@@ -16,7 +16,7 @@ const baseUrl = process.env.WA_BOT_BASE_URL;
 exports.getAllPayments = async (req, res) => {
   try {
     const { rows } = await pool.query(
-      "SELECT * FROM payments WHERE row_status = true"
+      "SELECT * FROM payments WHERE row_status = true",
     );
     res.json(response.success("Payments retrieved successfully", rows));
   } catch (err) {
@@ -30,7 +30,7 @@ exports.getPaymentById = async (req, res) => {
     const { id } = req.params;
     const { rows } = await pool.query(
       "SELECT id, user_id, amount, paid_at FROM payments WHERE id = $1 AND row_status = true",
-      [id]
+      [id],
     );
 
     if (rows.length === 0) {
@@ -53,7 +53,7 @@ exports.getPaymentByUserId = async (req, res) => {
       AND users.row_status = true 
       AND payments.row_status = true 
       ORDER BY payments.is_paid, payments.billing_date_for DESC`,
-      [user_id]
+      [user_id],
     );
 
     if (rows.length === 0) {
@@ -62,8 +62,8 @@ exports.getPaymentByUserId = async (req, res) => {
     res.json(
       response.success(
         `${rows.length} Payments ${rows[0].name} retrieved successfully`,
-        rows
-      )
+        rows,
+      ),
     );
   } catch (err) {
     console.error(err);
@@ -89,7 +89,7 @@ exports.createPayment = async (req, res) => {
       `INSERT INTO payments (user_id, amount, paid_at, billing_date_for, created_by)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [user_id, amount, paid_at, billing_date_for, createdBy]
+      [user_id, amount, paid_at, billing_date_for, createdBy],
     );
     res
       .status(201)
@@ -112,7 +112,7 @@ exports.UpdatePayment = async (req, res) => {
       payment_id,
       is_paid,
       user_id,
-      otp
+      otp,
     );
     if (validasi != null) {
       await client.query("ROLLBACK");
@@ -125,12 +125,12 @@ exports.UpdatePayment = async (req, res) => {
       WHERE id = $3 AND row_status = TRUE
       RETURNING *, 
         to_char(billing_date_for, 'YYYYMMDD') || lpad(payment_number::text, 6, '0') AS formatted_payment_number`,
-      [is_paid, modifiedBy, payment_id, paid_at]
+      [is_paid, modifiedBy, payment_id, paid_at],
     );
 
     await client.query(
       `UPDATE otp_codes SET is_used = TRUE WHERE otp_code = $1`,
-      [otp]
+      [otp],
     );
     const payment = result.rows[0];
 
@@ -146,7 +146,7 @@ exports.UpdatePayment = async (req, res) => {
       `SELECT u.name, ud.phone, ud.verify_phone, ud.is_subscribe FROM users u
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status =  TRUE
        WHERE u.id=$1 AND u.row_status = TRUE`,
-      [payment.user_id]
+      [payment.user_id],
     );
     if (user.length == 0) {
       await client.query("ROLLBACK");
@@ -157,50 +157,6 @@ exports.UpdatePayment = async (req, res) => {
       return res
         .status(404)
         .json(response.error("Whatsapp Pelanggan belum terverifikasi"));
-    }
-    const paymentFor = payment.billing_date_for
-      ? formatBillingDate(payment.billing_date_for, "id-ID", {
-          month: "long",
-          year: "numeric",
-        })
-      : "-";
-
-    const nameFile = `Kwitansi_BooyahNet_${paymentFor.replace(" ", "_")}`;
-    let buffer = await createPdfKwitansi({
-      no: payment.formatted_payment_number,
-      receivedFrom: user[0].name,
-      amount: payment.amount,
-      paymentFor: "WIFI Bulan " + paymentFor,
-      date: payment.paid_at,
-    });
-    buffer = Buffer.from(buffer);
-
-    const form = new FormData();
-    form.append("to", user[0].phone);
-    form.append(
-      "message",
-      `Halo ${capitalizeString(
-        user[0].name ?? ""
-      )}\nberikut kwitansi pembayaran WIFI bulan ${paymentFor}.\nTerima kasih telah melakukan pembayaran.`
-    );
-    form.append("file", buffer, {
-      filename: `${nameFile}.pdf`,
-      contentType: "application/pdf",
-    });
-    if (is_paid && user[0].is_subscribe) {
-      try {
-        const sendRes = await axios.post(`${baseUrl}/send-file`, form, {
-          headers: form.getHeaders(),
-        });
-
-        console.log("Kirim WA berhasil:", sendRes.data);
-      } catch (err) {
-        await client.query("ROLLBACK");
-        console.error("Gagal kirim ke WA:", err.response?.data || err.message);
-        return res
-          .status(500)
-          .json(response.error("Gagal mengirim pesan WhatsApp"));
-      }
     }
 
     await client.query("COMMIT");
@@ -225,14 +181,14 @@ exports.downloadReceipt = async (req, res) => {
       FROM payments WHERE id = $1 
       AND is_paid = TRUE 
       AND row_status = TRUE`,
-      [payment_id]
+      [payment_id],
     );
     if (payments.length === 0) {
       return res.status(404).json(response.error("payments not found"));
     }
     const { rows: users } = await pool.query(
       "SELECT * FROM users WHERE id = $1 AND row_status = TRUE",
-      [payments[0].user_id]
+      [payments[0].user_id],
     );
     if (users.length === 0) {
       return res.status(404).json(response.error("users not found"));
@@ -270,7 +226,7 @@ exports.sendPDF = async (req, res) => {
         ON ud.user_id = u.id AND ud.row_status = TRUE
       WHERE ud.phone = $1 
       AND u.row_status = TRUE`,
-      [wa_number]
+      [wa_number],
     );
 
     if (user.length === 0) {
@@ -289,7 +245,7 @@ exports.sendPDF = async (req, res) => {
     form.append("to", phone);
     form.append(
       "message",
-      `Halo, berikut kwitansi pembayaran Anda bulan ini. Terima kasih telah melakukan pembayaran.`
+      `Halo, berikut kwitansi pembayaran Anda bulan ini. Terima kasih telah melakukan pembayaran.`,
     );
     form.append("file", buffer, {
       filename: `kwitansi_${Date.now()}.pdf`,

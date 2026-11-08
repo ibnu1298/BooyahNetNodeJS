@@ -24,7 +24,7 @@ exports.register = async (req, res) => {
       const roleUser = await pool.query(
         `SELECT id FROM roles
         WHERE LOWER(name) = LOWER($1)`,
-        [rolePlot]
+        [rolePlot],
       );
       finalRoleId = roleUser.rows[0].id;
     }
@@ -33,7 +33,7 @@ exports.register = async (req, res) => {
       name,
       email,
       password,
-      finalRoleId
+      finalRoleId,
     );
     if (errorMessage) {
       return res.status(400).json(response.error(errorMessage));
@@ -44,7 +44,7 @@ exports.register = async (req, res) => {
       `INSERT INTO users (name, email, password, role_id, created_by)
        VALUES ($1, LOWER($2), $3, $4, $5)
        RETURNING id, name, email, role_id`,
-      [name, email, hashedPassword, finalRoleId, "system"]
+      [name, email, hashedPassword, finalRoleId, "system"],
     );
 
     res
@@ -74,7 +74,7 @@ exports.registerWithWhatsapp = async (req, res) => {
     ) {
       const roleUser = await client.query(
         `SELECT id FROM roles WHERE LOWER(name) = LOWER($1)`,
-        [rolePlot]
+        [rolePlot],
       );
       finalRoleId = roleUser.rows[0].id;
     }
@@ -86,7 +86,7 @@ exports.registerWithWhatsapp = async (req, res) => {
       finalRoleId,
       wa_number,
       verify_wa_number,
-      otp
+      otp,
     );
 
     if (errorMessage) {
@@ -99,7 +99,7 @@ exports.registerWithWhatsapp = async (req, res) => {
       `INSERT INTO users (name, email, password, role_id, created_by)
        VALUES ($1, LOWER($2), $3, $4, $5)
        RETURNING id, name, email, role_id`,
-      [name, email, hashedPassword, finalRoleId, "system"]
+      [name, email, hashedPassword, finalRoleId, "system"],
     );
 
     if (result.rows.length === 0) {
@@ -119,7 +119,7 @@ exports.registerWithWhatsapp = async (req, res) => {
         verify_wa_number,
         new Date(),
         result.rows[0].email,
-      ]
+      ],
     );
 
     if (result_details.rows.length === 0) {
@@ -153,7 +153,7 @@ exports.login = async (req, res) => {
         JOIN roles ON users.role_id = roles.id
         LEFT JOIN user_details ud ON users.id = ud.user_id
         WHERE LOWER(users.email) = LOWER($1)`,
-      [email]
+      [email],
     );
     if (result.rows.length === 0) {
       return res.status(400).json(response.error("Invalid credentials"));
@@ -181,7 +181,7 @@ exports.login = async (req, res) => {
 
     console.log(
       "⏰ accsess token (exp):",
-      new Date(decoded.exp * 1000).toLocaleString()
+      new Date(decoded.exp * 1000).toLocaleString(),
     ); // access token cepat expired
     const refreshToken = jwt.sign(payload, JWT_REFRESH_SECRET, {
       expiresIn: expireRefreshToken,
@@ -190,11 +190,11 @@ exports.login = async (req, res) => {
     const decodedRefreshToken = jwt.decode(refreshToken);
     console.log(
       "⌚ RefreshToken (exp):",
-      new Date(decodedRefreshToken.exp * 1000).toLocaleString()
+      new Date(decodedRefreshToken.exp * 1000).toLocaleString(),
     );
     await pool.query(
       `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-      [user.id, refreshToken, expiresAt]
+      [user.id, refreshToken, expiresAt],
     );
     console.log(token);
 
@@ -223,7 +223,7 @@ exports.refreshToken = async (req, res) => {
     // Cek token di database
     const { rows } = await pool.query(
       `SELECT * FROM refresh_tokens WHERE token = $1`,
-      [refreshToken]
+      [refreshToken],
     );
 
     if (rows.length === 0) {
@@ -288,7 +288,7 @@ exports.loginWhatsAppWithOTP = async (req, res) => {
        JOIN roles r ON u.role_id = r.id
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status = TRUE
        WHERE ud.phone = $1 AND u.row_status = TRUE`,
-      [wa_number]
+      [wa_number],
     );
 
     if (userRows.length === 0) {
@@ -300,7 +300,7 @@ exports.loginWhatsAppWithOTP = async (req, res) => {
     // Cek OTP di tabel otp_codes
     const { rows: otpRows } = await pool.query(
       `SELECT otp_code, expires_at, is_used FROM otp_codes WHERE user_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     if (otpRows.length === 0) {
@@ -332,7 +332,7 @@ exports.loginWhatsAppWithOTP = async (req, res) => {
 
     await pool.query(
       `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-      [user.id, refreshToken, expiresAt]
+      [user.id, refreshToken, expiresAt],
     );
     res
       .status(200)
@@ -358,7 +358,7 @@ exports.loginEmailWithOTP = async (req, res) => {
        JOIN roles r ON u.role_id = r.id
        LEFT JOIN user_details ud ON ud.user_id = u.id AND ud.row_status = TRUE
        WHERE LOWER(u.email) = LOWER($1) AND u.row_status = TRUE`,
-      [email]
+      [email],
     );
 
     if (userRows.length === 0) {
@@ -370,7 +370,7 @@ exports.loginEmailWithOTP = async (req, res) => {
     // Cek OTP di tabel otp_codes
     const { rows: otpRows } = await pool.query(
       `SELECT otp_code, expires_at, is_used FROM otp_codes WHERE user_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     if (otpRows.length === 0) {
@@ -402,7 +402,7 @@ exports.loginEmailWithOTP = async (req, res) => {
 
     await pool.query(
       `INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)`,
-      [user.id, refreshToken, expiresAt]
+      [user.id, refreshToken, expiresAt],
     );
     res
       .status(200)
@@ -434,7 +434,7 @@ exports.changePassword = async (req, res) => {
     // 1. Ambil user berdasarkan email
     const result = await pool.query(
       "SELECT id, password FROM users WHERE email = $1",
-      [email]
+      [email],
     );
     const user = result.rows[0];
 

@@ -14,7 +14,7 @@ exports.createSendEmailOTP = async (req, res) => {
 
     const { rows: user } = await pool.query(
       "SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND row_status = TRUE",
-      [email]
+      [email],
     );
 
     if (user.length === 0) {
@@ -27,18 +27,18 @@ exports.createSendEmailOTP = async (req, res) => {
 
     const { rows: otp_codes } = await pool.query(
       "SELECT * FROM otp_codes WHERE user_id = $1",
-      [user_id]
+      [user_id],
     );
     if (otp_codes.length === 0) {
       await pool.query(
         `INSERT INTO otp_codes (user_id, otp_code, expires_at)
        VALUES ($1, $2, $3)`,
-        [user_id, otpCode, expiresAt]
+        [user_id, otpCode, expiresAt],
       );
     } else {
       await pool.query(
         `UPDATE otp_codes SET otp_code = $2, expires_at = $3, is_used = FALSE  WHERE user_id = $1`,
-        [user_id, otpCode, expiresAt]
+        [user_id, otpCode, expiresAt],
       );
     }
 
@@ -79,7 +79,7 @@ exports.createSendWhatsAppOTP = async (req, res) => {
         ON ud.user_id = u.id AND ud.row_status = TRUE
       WHERE ud.phone = $1 
       AND u.row_status = TRUE`,
-      [wa_number]
+      [wa_number],
     );
 
     if (user.length === 0) {
@@ -93,19 +93,19 @@ exports.createSendWhatsAppOTP = async (req, res) => {
 
     const { rows: otp_codes } = await pool.query(
       "SELECT * FROM otp_codes WHERE user_id = $1",
-      [user_id]
+      [user_id],
     );
 
     if (otp_codes.length === 0) {
       await pool.query(
         `INSERT INTO otp_codes (user_id, otp_code, expires_at)
          VALUES ($1, $2, $3)`,
-        [user_id, otpCode, expiresAt]
+        [user_id, otpCode, expiresAt],
       );
     } else {
       await pool.query(
         `UPDATE otp_codes SET otp_code = $2, expires_at = $3, is_used = FALSE WHERE user_id = $1`,
-        [user_id, otpCode, expiresAt]
+        [user_id, otpCode, expiresAt],
       );
     }
 
@@ -150,7 +150,7 @@ exports.verificationEmail = async (req, res) => {
     // Ambil user_id berdasarkan email
     const { rows: userRows } = await pool.query(
       `SELECT id FROM users WHERE email = $1 AND row_status = TRUE`,
-      [email]
+      [email],
     );
 
     if (userRows.length === 0) {
@@ -164,7 +164,7 @@ exports.verificationEmail = async (req, res) => {
     // Cek OTP
     const { rows: otpRows } = await pool.query(
       `SELECT otp_code, expires_at, is_used FROM otp_codes WHERE user_id = $1`,
-      [user_id]
+      [user_id],
     );
 
     if (otpRows.length === 0) {
@@ -191,7 +191,7 @@ exports.verificationEmail = async (req, res) => {
 
     await pool.query(
       `UPDATE otp_codes SET is_used = TRUE WHERE otp_code = $1`,
-      [otp_code]
+      [otp_code],
     );
 
     return res
@@ -216,14 +216,14 @@ exports.verificationWhatsApp = async (req, res) => {
       `SELECT u.id FROM users u
       LEFT JOIN user_details AS ud ON ud.user_id = u.id AND ud.row_status = TRUE
       WHERE ud.phone = $1 AND u.row_status = TRUE`,
-      [wa_number]
+      [wa_number],
     );
 
     if (userRows.length === 0) {
       return res
         .status(400)
         .json(
-          response.error("User dengan nomor whatsapp tersebut tidak ditemukan")
+          response.error("User dengan nomor whatsapp tersebut tidak ditemukan"),
         );
     }
 
@@ -232,7 +232,7 @@ exports.verificationWhatsApp = async (req, res) => {
     // Cek OTP
     const { rows: otpRows } = await pool.query(
       `SELECT otp_code, expires_at, is_used FROM otp_codes WHERE user_id = $1`,
-      [user_id]
+      [user_id],
     );
 
     if (otpRows.length === 0) {
@@ -255,11 +255,11 @@ exports.verificationWhatsApp = async (req, res) => {
 
     await pool.query(
       `UPDATE user_details SET verify_phone = TRUE WHERE user_id = $1`,
-      [user_id]
+      [user_id],
     );
     await pool.query(
       `UPDATE otp_codes SET is_used = TRUE WHERE otp_code = $1`,
-      [otp_code]
+      [otp_code],
     );
     return res
       .status(200)
@@ -285,7 +285,7 @@ exports.sendOtpToUnregisteredWhatsApp = async (req, res) => {
     // Check apakah nomor sudah terdaftar
     const existing = await pool.query(
       `SELECT 1 FROM user_details WHERE phone = $1 AND row_status = TRUE`,
-      [wa_number]
+      [wa_number],
     );
     if (existing.rows.length > 0) {
       return res
@@ -307,7 +307,7 @@ exports.sendOtpToUnregisteredWhatsApp = async (req, res) => {
           expires_at = EXCLUDED.expires_at,
           is_used = FALSE
       `,
-      [uuidv4(), wa_number, otpCode, expiresAt]
+      [uuidv4(), wa_number, otpCode, expiresAt],
     );
 
     const sendOtpRes = await fetch(`${baseUrl}/send`, {
@@ -324,7 +324,7 @@ exports.sendOtpToUnregisteredWhatsApp = async (req, res) => {
     return res.status(200).json(
       response.success(`OTP berhasil dikirim ke WA : +${wa_number}`, {
         otpSent: true,
-      })
+      }),
     );
   } catch (err) {
     console.error("Gagal kirim OTP:", err);
@@ -342,7 +342,7 @@ exports.sendOtpToUnregisteredEmail = async (req, res) => {
     // Cek apakah email sudah pernah dipakai daftar
     const { rows: users } = await pool.query(
       "SELECT 1 FROM users WHERE LOWER(email) = LOWER($1) AND row_status = TRUE",
-      [email]
+      [email],
     );
 
     if (users.length > 0) {
@@ -355,21 +355,21 @@ exports.sendOtpToUnregisteredEmail = async (req, res) => {
     // Cek apakah sudah ada otp sebelumnya
     const { rows: existing } = await pool.query(
       `SELECT * FROM otp_codes WHERE email = $1`,
-      [email]
+      [email],
     );
 
     if (existing.length === 0) {
       await pool.query(
         `INSERT INTO otp_codes (email, otp_code, expires_at)
          VALUES ($1, $2, $3)`,
-        [email, otpCode, expiresAt]
+        [email, otpCode, expiresAt],
       );
     } else {
       await pool.query(
         `UPDATE otp_codes 
          SET otp_code = $2, expires_at = $3, is_used = FALSE 
          WHERE email = $1`,
-        [email, otpCode, expiresAt]
+        [email, otpCode, expiresAt],
       );
     }
 
@@ -415,7 +415,7 @@ exports.verifyOTPUnregistered = async (req, res) => {
     if (email) {
       const { rows: existingEmail } = await pool.query(
         `SELECT 1 FROM users WHERE LOWER(email) = LOWER($1) AND row_status = TRUE LIMIT 1`,
-        [email]
+        [email],
       );
       if (existingEmail.length > 0) {
         return res.status(409).json(response.error("Email sudah terdaftar"));
@@ -426,7 +426,7 @@ exports.verifyOTPUnregistered = async (req, res) => {
     if (wa_number) {
       const { rows: existingPhone } = await pool.query(
         `SELECT 1 FROM user_details WHERE phone = $1 AND row_status = TRUE LIMIT 1`,
-        [wa_number]
+        [wa_number],
       );
       if (existingPhone.length > 0) {
         return res
@@ -464,7 +464,7 @@ exports.verifyOTPUnregistered = async (req, res) => {
     return res.status(200).json(
       response.success("OTP valid, silakan lanjutkan pendaftaran", {
         verified: true,
-      })
+      }),
     );
   } catch (err) {
     console.error("Gagal verifikasi OTP:", err);
