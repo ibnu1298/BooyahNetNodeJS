@@ -3,7 +3,10 @@ const cors = require("cors");
 require("dotenv").config();
 const cron = require("node-cron");
 const reminderUserJob = require("./jobs/ReminderUser");
-
+const {
+  startWhatsAppService,
+  stopWhatsAppService,
+} = require("./jobs/startStopWAService");
 const usersRoutes = require("./routes/userRoutes");
 const paymentsRoutes = require("./routes/paymentRoutes");
 const authRoutes = require("./routes/authRoutes");
@@ -59,6 +62,42 @@ cron.schedule(
 );
 
 console.log("🟢 Cron job started.");
+
+// START WhatsApp Service - 06:00 WIB
+cron.schedule(
+  "30 06 * * *",
+  async () => {
+    console.log("🟢 Menjalankan START WhatsApp Service...");
+
+    try {
+      await startWhatsAppService();
+      console.log("✅ WhatsApp Service berhasil dinyalakan");
+    } catch (error) {
+      console.error("❌ Gagal START WhatsApp Service:", error);
+    }
+  },
+  {
+    timezone: "Asia/Jakarta",
+  },
+);
+
+// STOP WhatsApp Service - 08:00 WIB
+cron.schedule(
+  "30 7 * * *",
+  async () => {
+    console.log("🔴 Menjalankan STOP WhatsApp Service...");
+
+    try {
+      await stopWhatsAppService();
+      console.log("✅ WhatsApp Service berhasil dimatikan");
+    } catch (error) {
+      console.error("❌ Gagal STOP WhatsApp Service:", error);
+    }
+  },
+  {
+    timezone: "Asia/Jakarta",
+  },
+);
 
 // | CRON          | Arti                                |
 // | ------------- | ----------------------------------- |
