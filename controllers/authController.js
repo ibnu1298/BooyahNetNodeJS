@@ -156,7 +156,7 @@ exports.login = async (req, res) => {
       [email],
     );
     if (result.rows.length === 0) {
-      return res.status(400).json(response.error("Please Signup"));
+      return res.status(400).json(response.error("Invalid credentials"));
     }
 
     const user = result.rows[0];
