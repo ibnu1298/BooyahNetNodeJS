@@ -4,7 +4,7 @@ async function railwayRequest(query, variables = {}) {
   const response = await fetch(RAILWAY_API, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.RAILWAY_TOKEN}`,
+      Authorization: `Bearer ${process.env.RAILWAY_WA_TOKEN}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -32,9 +32,9 @@ async function startWhatsAppService() {
 
   await railwayRequest(mutation, {
     input: {
-      projectId: process.env.RAILWAY_PROJECT_ID,
-      environmentId: process.env.RAILWAY_ENVIRONMENT_ID,
-      serviceId: process.env.RAILWAY_SERVICE_ID,
+      projectId: process.env.RAILWAY_WA_PROJECT_ID,
+      environmentId: process.env.RAILWAY_WA_ENVIRONMENT_ID,
+      serviceId: process.env.RAILWAY_WA_SERVICE_ID,
     },
   });
 
@@ -58,9 +58,9 @@ async function stopWhatsAppService() {
 
   const data = await railwayRequest(query, {
     input: {
-      projectId: process.env.RAILWAY_PROJECT_ID,
-      environmentId: process.env.RAILWAY_ENVIRONMENT_ID,
-      serviceId: process.env.RAILWAY_SERVICE_ID,
+      projectId: process.env.RAILWAY_WA_PROJECT_ID,
+      environmentId: process.env.RAILWAY_WA_ENVIRONMENT_ID,
+      serviceId: process.env.RAILWAY_WA_SERVICE_ID,
     },
     first: 1,
   });
