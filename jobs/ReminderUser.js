@@ -171,7 +171,6 @@ async function cleaningData(data) {
     `;
 
     const result = await pool.query(query, [user.user_id]);
-    console.log(`Deleted payments: ${result.rowCount}`);
   }
   // Hapus OTP expired
   const otpResult = await pool.query(`
@@ -179,15 +178,11 @@ async function cleaningData(data) {
     WHERE expires_at < NOW();
   `);
 
-  console.log(`Deleted expired OTP: ${otpResult.rowCount}`);
-
   // Hapus refresh token expired
   const refreshResult = await pool.query(`
     DELETE FROM refresh_tokens
     WHERE expires_at < NOW();
   `);
-
-  console.log(`Deleted expired refresh tokens: ${refreshResult.rowCount}`);
 }
 
 async function sendReceipt() {
