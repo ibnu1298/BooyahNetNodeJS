@@ -94,7 +94,7 @@ async function getMessageReminder(user_id, reminderDays) {
     0,
   );
 
-  text = `*Hallo ${capitalizeString(users[0].name)}*\n`;
+  text = `Hallo *${capitalizeString(users[0].name)}*\n`;
   if (mildlyLatePayments.length) {
     if (reminderDays > 0) {
       text += `Mengingatkan bahwa tanggal pembayaran tagihan *WIFI BooyahNet* terlambat *${reminderDays} hari* \npembayaran untuk hari ${formatBillingDateWithDay(

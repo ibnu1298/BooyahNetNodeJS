@@ -75,7 +75,7 @@ async function getMessageReminder(user_id, reminderDays) {
     0,
   );
 
-  text = `*Hallo ${capitalizeString(users[0].name)}*\n`;
+  text = `Hallo *${capitalizeString(users[0].name)}*\n`;
   if (nextPayments.length) {
     if (reminderDays > 0) {
       text += `Mengingatkan bahwa *${reminderDays} hari lagi* adalah tanggal pembayaran tagihan *WIFI BooyahNet*\npada hari ${formatBillingDateWithDay(
