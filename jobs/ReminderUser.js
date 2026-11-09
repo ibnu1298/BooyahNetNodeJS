@@ -138,7 +138,7 @@ async function reminderUserJob() {
     await sendReceipt();
     await beforeBilling(result);
     await afterBilling(result);
-    await deleteDataPayment(result);
+    await cleaningData(result);
   } catch (error) {
     console.error("❌ Gagal menjalankan ReminderUser:", error.message);
   }
@@ -146,7 +146,7 @@ async function reminderUserJob() {
 
 module.exports = reminderUserJob;
 
-async function deleteDataPayment(data) {
+async function cleaningData(data) {
   for (const user of data.rows) {
     const query = `
       WITH unpaid AS (
@@ -171,8 +171,23 @@ async function deleteDataPayment(data) {
     `;
 
     const result = await pool.query(query, [user.user_id]);
-    console.log(`Deleted rows: ${result.rowCount}`);
+    console.log(`Deleted payments: ${result.rowCount}`);
   }
+  // Hapus OTP expired
+  const otpResult = await pool.query(`
+    DELETE FROM otp_codes
+    WHERE expires_at < NOW();
+  `);
+
+  console.log(`Deleted expired OTP: ${otpResult.rowCount}`);
+
+  // Hapus refresh token expired
+  const refreshResult = await pool.query(`
+    DELETE FROM refresh_tokens
+    WHERE expires_at < NOW();
+  `);
+
+  console.log(`Deleted expired refresh tokens: ${refreshResult.rowCount}`);
 }
 
 async function sendReceipt() {
