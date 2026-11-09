@@ -65,7 +65,7 @@ console.log("🟢 Cron job started.");
 
 // START WhatsApp Service - 06:00 WIB
 cron.schedule(
-  "30 06 * * *",
+  "55 09 * * *",
   async () => {
     console.log("🟢 Menjalankan START WhatsApp Service...");
 
@@ -83,7 +83,7 @@ cron.schedule(
 
 // STOP WhatsApp Service - 08:00 WIB
 cron.schedule(
-  "30 7 * * *",
+  "0 10 * * *",
   async () => {
     console.log("🔴 Menjalankan STOP WhatsApp Service...");
 
