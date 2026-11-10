@@ -1,14 +1,15 @@
 const pool = require("../../db");
+const bcrypt = require("bcrypt");
 
 exports.validateUpdateIsPaid = async (payment_id, is_paid, user_id, otp) => {
   const { rows: users } = await pool.query(
     `SELECT name FROM users WHERE id = $1`,
-    [user_id]
+    [user_id],
   );
   // Cek OTP
   const { rows: otpRows } = await pool.query(
     `SELECT otp_code, expires_at, is_used FROM otp_codes WHERE user_id = $1`,
-    [user_id]
+    [user_id],
   );
   console.log(otpRows);
 
@@ -34,7 +35,7 @@ exports.validateUpdateIsPaid = async (payment_id, is_paid, user_id, otp) => {
 
   const { rows: payment } = await pool.query(
     "SELECT * FROM payments WHERE id = $1",
-    [payment_id]
+    [payment_id],
   );
   if (!payment_id || typeof payment_id !== "string" || payment.length === 0) {
     return { error: "payment not found", status: 400 };
@@ -43,37 +44,38 @@ exports.validateUpdateIsPaid = async (payment_id, is_paid, user_id, otp) => {
   return null; // artinya valid
 };
 
-exports.validateUpdatePaidAt = async (payment_id, is_paid, user_id, otp) => {
-  const { rows: otpRows } = await pool.query(
-    `SELECT otp_code, expires_at, is_used FROM otp_codes WHERE user_id = $1`,
-    [user_id]
-  );
-
-  if (otpRows.length === 0) {
-    return { error: "OTP tidak ditemukan untuk user ini", status: 400 };
-  }
-
-  const { otp_code, expires_at, is_used } = otpRows[0];
-
+exports.validateUpdatePaidAt = async (
+  payment_id,
+  is_paid,
+  user_id,
+  password,
+) => {
   // Cek apakah expired
   const now = new Date();
-  if (new Date(expires_at) < now || is_used == true) {
-    return { error: "OTP sudah kadaluarsa", status: 400 };
+
+  const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [
+    user_id,
+  ]);
+  if (result.rows.length === 0) {
+    return { error: "Password Invalid", status: 400 };
   }
 
-  if (otp !== otp_code) {
-    return { error: "OTP tidak sesuai", status: 400 };
+  const user = result.rows[0];
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    return { error: "Password Invalid", status: 400 };
   }
+
   if (typeof is_paid !== "boolean") {
     return { error: "OTP tidak sesuai", status: 400 };
   }
   const { rows: payment } = await pool.query(
     "SELECT * FROM payments WHERE id = $1",
-    [payment_id]
+    [payment_id],
   );
   if (!payment_id || typeof payment_id !== "string" || payment.length === 0) {
     return { error: "payment not found", status: 400 };
   }
 
-  return null; // artinya valid
+  return null; // valid
 };

@@ -104,7 +104,7 @@ exports.UpdatePayment = async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    const { paid_at, payment_id, is_paid, otp } = req.body;
+    const { paid_at, payment_id, is_paid, password } = req.body;
     const modifiedBy = req.user?.email;
     const user_id = req.user?.userId;
 
@@ -112,7 +112,7 @@ exports.UpdatePayment = async (req, res) => {
       payment_id,
       is_paid,
       user_id,
-      otp,
+      password,
     );
     if (validasi != null) {
       await client.query("ROLLBACK");
@@ -128,10 +128,6 @@ exports.UpdatePayment = async (req, res) => {
       [is_paid, modifiedBy, payment_id, paid_at],
     );
 
-    await client.query(
-      `UPDATE otp_codes SET is_used = TRUE WHERE otp_code = $1`,
-      [otp],
-    );
     const payment = result.rows[0];
 
     if (!payment) {
