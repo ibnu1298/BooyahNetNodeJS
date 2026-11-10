@@ -47,7 +47,7 @@ exports.getPaymentByUserId = async (req, res) => {
   try {
     const { user_id } = req.params;
     const { rows } = await pool.query(
-      `SELECT payments.id payment_id, user_id,users.name, users.email, amount, paid_at, is_paid, billing_date_for
+      `SELECT payments.id payment_id, user_id,users.name, users.email, amount, paid_at, is_paid, billing_date_for, payments.is_send_receipt
       FROM payments INNER JOIN users ON users.id = payments.user_id 
       WHERE user_id = $1 
       AND users.row_status = true 
